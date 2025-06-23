@@ -128,7 +128,6 @@ const PatientRegistrationForm: FC<PatientRegistrationFormProps> = ({
               autofillGeoOrganizationMutation.mutate({
                 org_type: "govt",
                 name: abhaNumber.district,
-                level_cache: 1,
                 limit: 1,
               });
             }
