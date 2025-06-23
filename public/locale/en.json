@@ -125,6 +125,7 @@
   "verify_with_otp": "Verify with OTP",
   "verify_demographics": "Verify Demographics",
   "verify_with_demographics": "Verify with Demographics",
+  "verify_with_bio": "Verify with Biometrics",
   "full_name": "Full Name",
   "gender": "Gender",
   "date_of_birth": "Date of Birth",
@@ -135,5 +136,11 @@
   "mobile_number": "Mobile Number",
   "email": "Email",
   "download_abha_card": "Download ABHA Card",
-  "print_abha_card": "Print ABHA Card"
+  "print_abha_card": "Print ABHA Card",
+  "follow_the_rd_instructions": "Follow the instructions shown by the RD application",
+  "fingerprint_scan_instructions": "Please place your finger on the scanner to scan your fingerprint. Make sure your finger is clean and dry. Place your finger firmly such that the tip of your finger is placed at the top end of the scanner. Do not move your finger until the scan is complete.",
+  "fingerprint_verified": "Fingerprint has been verified successfully.",
+  "fingerprint_verification_failed": "Fingerprint verification failed. Please initaite the flow again.",
+  "verify_bio": "Verify Biometrics",
+  "capture_fingerprint": "Capture Fingerprint"
 }

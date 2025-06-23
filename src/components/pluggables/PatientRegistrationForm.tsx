@@ -69,6 +69,18 @@ const PatientRegistrationForm: FC<PatientRegistrationFormProps> = ({
     });
   }, [queryClient]);
 
+  const autofillGeoOrganizationMutation = useMutation({
+    mutationFn: apis.govtOrganization.list,
+    onSuccess: (data) => {
+      if (data.results.length === 0) {
+        return;
+      }
+
+      form.setValue("_selected_levels", data.results);
+      form.setValue("geo_organization", data.results[0].id);
+    },
+  });
+
   if (!form.watch("abha_id")) {
     return (
       <div className="abdm-container flex justify-end w-full">
@@ -111,6 +123,14 @@ const PatientRegistrationForm: FC<PatientRegistrationFormProps> = ({
               "pincode",
               abhaNumber.pincode && Number(abhaNumber.pincode)
             );
+
+            if (abhaNumber.district) {
+              autofillGeoOrganizationMutation.mutate({
+                org_type: "govt",
+                name: abhaNumber.district,
+                limit: 1,
+              });
+            }
           }}
         />
       </div>

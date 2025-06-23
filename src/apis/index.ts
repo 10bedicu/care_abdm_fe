@@ -8,6 +8,7 @@ import {
 import { queryString, request } from "./request";
 
 import { AbhaNumber } from "../types/abhaNumber";
+import { GovtOrganization } from "@/types/govtOrganization";
 import { HealthFacility } from "../types/healthFacility";
 import { HealthInformation } from "../types/healthInformation";
 import { PaginatedResponse } from "./types";
@@ -165,6 +166,22 @@ export const apis = {
         is_new: boolean;
         abha_number: AbhaNumber;
       }>("/api/abdm/v3/health_id/create/verify_aadhaar_demographics/", {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+    },
+
+    abhaCreateVerifyAadhaarBio: async (body: {
+      transaction_id?: string;
+      aadhaar: string;
+      fingerprint_pid: string;
+      mobile: string;
+    }) => {
+      return await request<{
+        transaction_id: string;
+        is_new: boolean;
+        abha_number: AbhaNumber;
+      }>("/api/abdm/v3/health_id/create/verify_aadhaar_bio/", {
         method: "POST",
         body: JSON.stringify(body),
       });
@@ -334,6 +351,32 @@ export const apis = {
   user: {
     getCurrentUser: async () => {
       return await request<User>("/api/v1/users/getcurrentuser/");
+    },
+  },
+
+  rdService: {
+    capture: async () => {
+      const response = await fetch("https://127.0.0.1:11100/rd/capture", {
+        method: "CAPTURE",
+        body: `<?xml version="1.0"?> <PidOptions ver="1.0"> <Opts env="P" fCount="1" fType="2" format="0" pidVer="2.0" wadh="RZ+k4w9ySTzOibQdDHPzCFqrKScZ74b3EibKYy1WyGw=" timeout="10000" posh="UNKNOWN" /> <CustOpts><Param name="mantrakey" value="B0CZLLZ98Z" /></CustOpts> </PidOptions>`,
+      });
+
+      return response.text();
+    },
+  },
+
+  govtOrganization: {
+    list: async (query?: {
+      level_cache?: number;
+      name?: string;
+      org_type?: "govt";
+      limit?: number;
+      offset?: number;
+      parent?: string;
+    }) => {
+      return await request<PaginatedResponse<GovtOrganization>>(
+        "/api/v1/govt/organization/" + queryString(query)
+      );
     },
   },
 };
