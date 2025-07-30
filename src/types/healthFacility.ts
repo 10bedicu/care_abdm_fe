@@ -7,5 +7,4 @@ export type HealthFacility = {
   hf_id: string;
   facility: string;
   detail?: string;
-  benefit_name?: string;
 };

@@ -12,33 +12,39 @@ export interface InjectedStepProps<T> {
   currentStepIndex: number;
   isFirstStep: boolean;
   isLastStep: boolean;
-  goTo: (step: string) => void;
+  next: () => void;
+  prev: () => void;
+  goTo: (step: number) => void;
   memory: T | null;
   setMemory: Dispatch<SetStateAction<T>>;
 }
 
-export type MultiStepFormStep = {
-  id: string;
-  element: ReactElement;
-};
-
 export default function useMultiStepForm<T>(
-  steps: MultiStepFormStep[],
-  initialValues?: T
+  steps: ReactElement[],
+  initialValues?: T,
 ) {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [memory, setMemory] = useState<T>(initialValues as T);
 
-  const goTo = useCallback(
-    (stepId: string) => {
-      const stepIndex = steps.findIndex((step) => step.id === stepId);
-      if (stepIndex === -1) {
-        throw new Error(`Step with id ${stepId} not found`);
-      }
+  const next = useCallback(
+    () =>
+      setCurrentStepIndex((prev) =>
+        steps.length - 1 > prev ? prev + 1 : prev,
+      ),
+    [steps.length],
+  );
 
-      setCurrentStepIndex(stepIndex);
-    },
-    [steps.length]
+  const prev = useCallback(
+    () => setCurrentStepIndex((prev) => (prev > 0 ? prev - 1 : prev)),
+    [],
+  );
+
+  const goTo = useCallback(
+    (step: number) =>
+      setCurrentStepIndex((prev) =>
+        step >= 0 && step <= steps.length - 1 ? step : prev,
+      ),
+    [steps.length],
   );
 
   const options = useMemo(
@@ -46,16 +52,18 @@ export default function useMultiStepForm<T>(
       currentStepIndex,
       isFirstStep: currentStepIndex === 0,
       isLastStep: currentStepIndex === steps.length - 1,
+      next,
+      prev,
       goTo,
       memory,
       setMemory,
     }),
-    [currentStepIndex, memory, goTo, steps.length]
+    [currentStepIndex, memory, next, prev, goTo, steps.length],
   );
 
-  const currentStep = cloneElement(steps[currentStepIndex].element, {
+  const currentStep = cloneElement(steps[currentStepIndex], {
     ...options,
-    ...(steps[currentStepIndex].element as ReactElement<T>).props,
+    ...steps[currentStepIndex].props,
   });
 
   return { currentStep, ...options };

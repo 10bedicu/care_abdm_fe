@@ -1,10 +1,15 @@
+import { apis } from "@/apis";
 import { useMutation, useQuery } from "@tanstack/react-query";
-
 import { FC } from "react";
 import { LinkAbhaNumber } from "@/components/LinkAbhaNumber";
-import { Patient } from "@/types/patient";
-import { apis } from "@/apis";
 import { toast } from "@/lib/utils";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Patient } from "@/types/patient";
 
 type PatientHomeActionsProps = {
   patient: Patient;
@@ -23,6 +28,12 @@ const PatientHomeActions: FC<PatientHomeActionsProps> = ({
     enabled: !!patient.id,
   });
 
+  const { data: healthFacility } = useQuery({
+    queryKey: ["healthFacility", facilityId],
+    queryFn: () => apis.healthFacility.get(facilityId!),
+    enabled: !!facilityId,
+  });
+
   const linkAbhaNumberAndPatientMutation = useMutation({
     mutationFn: apis.healthId.linkAbhaNumberAndPatient,
     onSuccess: (data) => {
@@ -39,16 +50,30 @@ const PatientHomeActions: FC<PatientHomeActionsProps> = ({
   return (
     <>
       {!abhaNumber && (
-        <LinkAbhaNumber
-          facilityId={facilityId}
-          onSuccess={(abhaNumber) => {
-            linkAbhaNumberAndPatientMutation.mutate({
-              patient: patient.id,
-              abha_number: abhaNumber.external_id,
-            });
-          }}
-          className={className}
-        />
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger>
+              <LinkAbhaNumber
+                disabled={!healthFacility}
+                onSuccess={(abhaNumber) => {
+                  linkAbhaNumberAndPatientMutation.mutate({
+                    patient: patient.id,
+                    abha_number: abhaNumber.external_id,
+                  });
+                }}
+                className={className}
+              />
+            </TooltipTrigger>
+            {!healthFacility && (
+              <TooltipContent>
+                <p>
+                  Abha linking is disabled for this facility as it doesn't have
+                  health facility id configured.
+                </p>
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </TooltipProvider>
       )}
     </>
   );
