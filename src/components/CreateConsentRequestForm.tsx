@@ -87,6 +87,7 @@ const CreateConsentRequestForm: FC<CreateConsentRequestFormProps> = ({
   function onSubmit(values: CreateConsentRequestFormValues) {
     createConsentRequestOtpMutation.mutate({
       ...values,
+      patient_abha: form.getValues("patient_abha"),
       from_time: values.time_range.from,
       to_time: values.time_range.to,
     });

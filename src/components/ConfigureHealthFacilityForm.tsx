@@ -1,12 +1,9 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { Trans, useTranslation } from "react-i18next";
-import { useMutation, useQuery } from "@tanstack/react-query";
 
-import { Button } from "@/components/ui/button";
+import { CircleAlertIcon, CircleCheckIcon } from "lucide-react";
+import { FC, useEffect } from "react";
 import {
   Form,
   FormControl,
@@ -15,20 +12,24 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { FC, useEffect } from "react";
+import { Trans, useTranslation } from "react-i18next";
+import { useMutation, useQuery } from "@tanstack/react-query";
+
+import { Button } from "@/components/ui/button";
+import { GenerateScanAndShareQR } from "./GenerateScanAndShareQR";
+import { HealthFacility } from "@/types/healthFacility";
+import { I18NNAMESPACE } from "@/lib/constants";
+import { Input } from "@/components/ui/input";
 import { apis } from "@/apis";
 import { toast } from "@/lib/utils";
-import { HealthFacility } from "@/types/healthFacility";
-import { CircleAlertIcon, CircleCheckIcon } from "lucide-react";
-import { I18NNAMESPACE } from "@/lib/constants";
-import { GenerateScanAndShareQR } from "./GenerateScanAndShareQR";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 type ConfigureHealthFacilityFormProps = {
   facilityId: string;
@@ -204,10 +205,10 @@ export const ConfigureHealthFacilityForm: FC<
           />
           <Button
             type="submit"
-            disabled={
-              form.watch("hf_id") === healthFacility?.hf_id &&
-              healthFacility?.registered
-            }
+            // disabled={
+            //   form.watch("hf_id") === healthFacility?.hf_id &&
+            //   healthFacility?.registered
+            // }
             loading={
               registerHealthFacilityAsServiceMutation.isPending ||
               updateHealthFacilityMutation.isPending ||

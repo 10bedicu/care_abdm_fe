@@ -1,16 +1,18 @@
 import { FC, useEffect } from "react";
-import { UseFormReturn } from "react-hook-form";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apis } from "@/apis";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { LinkAbhaNumber } from "../LinkAbhaNumber";
+import { ShowAbhaProfile } from "../LinkAbhaNumber/ShowAbhaProfile";
+import { UseFormReturn } from "react-hook-form";
+import { apis } from "@/apis";
 import { toast } from "@/lib/utils";
 
 type PatientRegistrationFormProps = {
@@ -30,12 +32,6 @@ const PatientRegistrationForm: FC<PatientRegistrationFormProps> = ({
     queryKey: ["abhaNumber", patientId],
     queryFn: () => apis.abhaNumber.get(patientId!),
     enabled: !!patientId,
-  });
-
-  const { data: healthFacility } = useQuery({
-    queryKey: ["healthFacility", facilityId!],
-    queryFn: () => apis.healthFacility.get(facilityId!),
-    enabled: !!facilityId!,
   });
 
   useEffect(() => {
@@ -79,6 +75,18 @@ const PatientRegistrationForm: FC<PatientRegistrationFormProps> = ({
     });
   }, [queryClient]);
 
+  const autofillGeoOrganizationMutation = useMutation({
+    mutationFn: apis.govtOrganization.list,
+    onSuccess: (data) => {
+      if (data.results.length === 0) {
+        return;
+      }
+
+      form.setValue("_selected_levels", data.results);
+      form.setValue("geo_organization", data.results[0].id);
+    },
+  });
+
   if (!form.watch("abha_id")) {
     return (
       <div className="flex justify-end w-full">
@@ -86,11 +94,13 @@ const PatientRegistrationForm: FC<PatientRegistrationFormProps> = ({
           <Tooltip>
             <TooltipTrigger>
               <LinkAbhaNumber
+                facilityId={facilityId}
                 type="button"
                 variant="outline"
                 className="text-primary border-primary-400"
-                disabled={!healthFacility}
                 onSuccess={(abhaNumber) => {
+                  form.setValue("abha", abhaNumber);
+
                   form.setValue("abha_id", abhaNumber.external_id);
                   form.setValue("abha_number", abhaNumber.abha_number);
                   form.setValue("abha_address", abhaNumber.health_id);
@@ -113,9 +123,8 @@ const PatientRegistrationForm: FC<PatientRegistrationFormProps> = ({
                   form.setValue("blood_group", "unknown");
                   form.setValue(
                     "gender",
-                    { M: "male", F: "female", O: "transgender" }[
-                      abhaNumber.gender
-                    ] ?? "transgender"
+                    { M: "male", F: "female", O: "transgender" }[abhaNumber.gender] ??
+                      "transgender"
                   );
                   form.setValue("address", abhaNumber.address);
                   form.setValue("permanent_address", abhaNumber.address);
@@ -123,10 +132,18 @@ const PatientRegistrationForm: FC<PatientRegistrationFormProps> = ({
                     "pincode",
                     abhaNumber.pincode && Number(abhaNumber.pincode)
                   );
+
+                  if (abhaNumber.district) {
+                    autofillGeoOrganizationMutation.mutate({
+                      org_type: "govt",
+                      name: abhaNumber.district,
+                      limit: 1,
+                    });
+                  }
                 }}
               />
             </TooltipTrigger>
-            {!healthFacility && (
+            {!facilityId && (
               <TooltipContent>
                 <p>
                   Abha linking is disabled for this facility as it doesn't have
@@ -139,6 +156,8 @@ const PatientRegistrationForm: FC<PatientRegistrationFormProps> = ({
       </div>
     );
   }
+
+  const abhaProfile = abhaNumber || form.getValues("abha");
 
   return (
     <div id="abha-info" className="space-y-6">
@@ -159,6 +178,8 @@ const PatientRegistrationForm: FC<PatientRegistrationFormProps> = ({
         <Label>ABHA Address</Label>
         <Input value={form.getValues("abha_address")} disabled />
       </div>
+
+      {abhaProfile && <ShowAbhaProfile abhaNumber={abhaProfile} />}
     </div>
   );
 };

@@ -48,6 +48,21 @@ module.exports = {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      keyframes: {
+        "fill-up": {
+          "0%": {
+            maskPosition: "0% 100%",
+            WebkitMaskPosition: "0% 100%",
+          },
+          "100%": {
+            maskPosition: "0% 0%",
+            WebkitMaskPosition: "0% 0%",
+          },
+        },
+      },
+      animation: {
+        "fill-up": "fill-up 2s ease-out forwards",
+      },
     },
   },
   corePlugins: {

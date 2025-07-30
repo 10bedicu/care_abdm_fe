@@ -28,12 +28,6 @@ const PatientHomeActions: FC<PatientHomeActionsProps> = ({
     enabled: !!patient.id,
   });
 
-  const { data: healthFacility } = useQuery({
-    queryKey: ["healthFacility", facilityId],
-    queryFn: () => apis.healthFacility.get(facilityId!),
-    enabled: !!facilityId,
-  });
-
   const linkAbhaNumberAndPatientMutation = useMutation({
     mutationFn: apis.healthId.linkAbhaNumberAndPatient,
     onSuccess: (data) => {
@@ -54,7 +48,7 @@ const PatientHomeActions: FC<PatientHomeActionsProps> = ({
           <Tooltip>
             <TooltipTrigger>
               <LinkAbhaNumber
-                disabled={!healthFacility}
+                facilityId={facilityId}
                 onSuccess={(abhaNumber) => {
                   linkAbhaNumberAndPatientMutation.mutate({
                     patient: patient.id,
@@ -64,7 +58,7 @@ const PatientHomeActions: FC<PatientHomeActionsProps> = ({
                 className={className}
               />
             </TooltipTrigger>
-            {!healthFacility && (
+            {!facilityId && (
               <TooltipContent>
                 <p>
                   Abha linking is disabled for this facility as it doesn't have
