@@ -1,4 +1,3 @@
-import { AbhaNumber } from "../types/abhaNumber";
 import {
   ConsentAccessMode,
   ConsentFrequencyUnit,
@@ -6,10 +5,13 @@ import {
   ConsentPurpose,
   ConsentRequest,
 } from "../types/consent";
+import { queryString, request } from "./request";
+
+import { AbhaNumber } from "../types/abhaNumber";
 import { HealthFacility } from "../types/healthFacility";
 import { HealthInformation } from "../types/healthInformation";
-import { queryString, request } from "./request";
 import { PaginatedResponse } from "./types";
+import { User } from "@/types/user";
 
 // FIXME: Move all the api specific types to a ./types.ts file
 
@@ -21,7 +23,7 @@ export const apis = {
       ordering?: string;
     }) => {
       return await request<PaginatedResponse<ConsentRequest>>(
-        "/api/abdm/consent/" + queryString(query),
+        "/api/abdm/consent/" + queryString(query)
       );
     },
 
@@ -55,7 +57,7 @@ export const apis = {
         {
           method: "POST",
           body: JSON.stringify({ consent_request: consentRequest }),
-        },
+        }
       );
     },
   },
@@ -63,7 +65,7 @@ export const apis = {
   healthInformation: {
     get: async (artefactId: string) => {
       return await request<HealthInformation>(
-        `/api/abdm/health_information/${artefactId}`,
+        `/api/abdm/health_information/${artefactId}`
       );
     },
   },
@@ -71,7 +73,7 @@ export const apis = {
   healthFacility: {
     list: async () => {
       return await request<PaginatedResponse<HealthFacility>>(
-        "/api/abdm/health_facility/",
+        "/api/abdm/health_facility/"
       );
     },
 
@@ -84,7 +86,7 @@ export const apis = {
 
     get: async (facilityId: string) => {
       return await request<HealthFacility>(
-        `/api/abdm/health_facility/${facilityId}/`,
+        `/api/abdm/health_facility/${facilityId}/`
       );
     },
 
@@ -93,14 +95,14 @@ export const apis = {
       body: {
         facility: string;
         hf_id: string;
-      },
+      }
     ) => {
       return await request<HealthFacility>(
         `/api/abdm/health_facility/${facilityId}/`,
         {
           method: "PUT",
           body: JSON.stringify(body),
-        },
+        }
       );
     },
 
@@ -108,14 +110,14 @@ export const apis = {
       facilityId: string,
       body: {
         hf_id?: string;
-      },
+      }
     ) => {
       return await request<HealthFacility>(
         `/api/abdm/health_facility/${facilityId}/`,
         {
           method: "PATCH",
           body: JSON.stringify(body),
-        },
+        }
       );
     },
 
@@ -124,7 +126,7 @@ export const apis = {
         `/api/abdm/health_facility/${facilityId}/register_service/`,
         {
           method: "POST",
-        },
+        }
       );
     },
   },
@@ -132,7 +134,7 @@ export const apis = {
   abhaNumber: {
     get: async (abhaNumberId: string) => {
       return await request<AbhaNumber>(
-        `/api/abdm/abha_number/${abhaNumberId}/`,
+        `/api/abdm/abha_number/${abhaNumberId}/`
       );
     },
 
@@ -145,6 +147,29 @@ export const apis = {
   },
 
   healthId: {
+    abhaCreateVerifyAadhaarDemographics: async (body: {
+      transaction_id?: string;
+      name: string;
+      date_of_birth: string;
+      gender: "M" | "F" | "O";
+      state_code: string;
+      district_code: string;
+      pin_code?: string;
+      address?: string;
+      mobile?: string;
+      profile_photo?: string;
+      aadhaar: string;
+    }) => {
+      return await request<{
+        transaction_id: string;
+        is_new: boolean;
+        abha_number: AbhaNumber;
+      }>("/api/abdm/v3/health_id/create/verify_aadhaar_demographics/", {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+    },
+
     abhaCreateSendAadhaarOtp: async (body: {
       aadhaar: string;
       transaction_id?: string;
@@ -281,8 +306,34 @@ export const apis = {
 
     getAbhaCard: async (query: { abha_id?: string; type: "pdf" | "png" }) => {
       return await request<Blob>(
-        "/api/abdm/v3/health_id/login/get_abha_card/" + queryString(query),
+        "/api/abdm/v3/health_id/abha_card/" + queryString(query)
       );
+    },
+  },
+
+  utility: {
+    states: async () => {
+      return await request<
+        {
+          state_name: string;
+          state_code: number;
+        }[]
+      >("/api/abdm/v3/utility/states/");
+    },
+
+    districts: async (stateId: number) => {
+      return await request<
+        {
+          district_name: string;
+          district_code: number;
+        }[]
+      >(`/api/abdm/v3/utility/states/${stateId}/districts/`);
+    },
+  },
+
+  user: {
+    getCurrentUser: async () => {
+      return await request<User>("/api/v1/users/getcurrentuser/");
     },
   },
 };

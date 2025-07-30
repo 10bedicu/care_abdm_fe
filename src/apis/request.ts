@@ -37,8 +37,13 @@ export async function request<Response>(
 
   const response = await fetch(url, requestInit);
 
-  // TODO: parse response based on content type
-  const data = await response.json();
+  let data = null;
+  const contentType = response.headers.get("Content-Type");
+  if (contentType === "application/json") {
+    data = await response.json();
+  } else if (contentType === "image/png") {
+    data = await response.blob();
+  }
 
   if (!response.ok) {
     if (response.status === 401) {

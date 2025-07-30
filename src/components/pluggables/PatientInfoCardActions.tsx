@@ -1,6 +1,3 @@
-import { apis } from "@/apis";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { FC, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -9,12 +6,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import CreateConsentRequestForm from "../CreateConsentRequestForm";
-import { useTranslation } from "react-i18next";
+import { FC, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import CreateConsentRequestForm from "../CreateConsentRequestForm";
 import { Encounter } from "@/types/encounter";
 import { I18NNAMESPACE } from "@/lib/constants";
+import { apis } from "@/apis";
+import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 type PatientInfoCardActionsProps = {
   encounter: Encounter;
@@ -43,7 +44,7 @@ const PatientInfoCardActions: FC<PatientInfoCardActionsProps> = ({
   return (
     <>
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogTrigger asChild>
+        <DialogTrigger asChild className="abdm-container">
           <Button
             variant="ghost"
             className={cn(
@@ -54,7 +55,7 @@ const PatientInfoCardActions: FC<PatientInfoCardActionsProps> = ({
             {t("hi__fetch_records")}
           </Button>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="abdm-container sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>{t("hi__fetch_records")}</DialogTitle>
             <DialogDescription>

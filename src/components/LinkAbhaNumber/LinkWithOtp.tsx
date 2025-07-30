@@ -1,13 +1,5 @@
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
-import { FC, useState } from "react";
-import { useForm } from "react-hook-form";
-import { useTranslation } from "react-i18next";
-import { toast } from "@/lib/utils";
-import { z } from "zod";
-
 import { Button, ButtonWithTimer } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { FC, useMemo, useState } from "react";
 import {
   Form,
   FormControl,
@@ -17,7 +9,11 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import {
+  I18NNAMESPACE,
+  MAX_OTP_RESEND_COUNT,
+  SUPPORTED_AUTH_METHODS,
+} from "@/lib/constants";
 import {
   InputOTP,
   InputOTPGroup,
@@ -28,15 +24,19 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-
-import { apis } from "@/apis";
-import { AbhaNumber } from "@/types/abhaNumber";
+import { Trans, useTranslation } from "react-i18next";
 import useMultiStepForm, { InjectedStepProps } from "./useMultiStepForm";
-import {
-  I18NNAMESPACE,
-  MAX_OTP_RESEND_COUNT,
-  SUPPORTED_AUTH_METHODS,
-} from "@/lib/constants";
+
+import { AbhaNumber } from "@/types/abhaNumber";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { apis } from "@/apis";
+import { toast } from "@/lib/utils";
+import { useForm } from "react-hook-form";
+import { useMutation } from "@tanstack/react-query";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useLinkAbhaNumberContext } from ".";
 
 type LinkWithOtpProps = {
   onSuccess: (abhaNumber: AbhaNumber) => void;
@@ -54,8 +54,14 @@ type FormMemory = {
 export const LinkWithOtp: FC<LinkWithOtpProps> = ({ onSuccess }) => {
   const { currentStep } = useMultiStepForm<FormMemory>(
     [
-      <EnterId {...({} as EnterIdProps)} />,
-      <VerifyId {...({ onSuccess } as VerifyIdProps)} />,
+      {
+        id: "enter-id",
+        element: <EnterId {...({} as EnterIdProps)} />,
+      },
+      {
+        id: "verify-id",
+        element: <VerifyId {...({ onSuccess } as VerifyIdProps)} />,
+      },
     ],
     {
       id: "",
@@ -97,12 +103,20 @@ const enterIdFormSchema = z.object({
   disclaimer_3: z.boolean().refine((value) => value === true, {
     message: "Please read and accept this policy",
   }),
+  disclaimer_4: z.boolean().refine((value) => value === true, {
+    message: "Please read and accept this policy",
+  }),
+  disclaimer_5: z.boolean().refine((value) => value === true, {
+    message: "Please read and accept this policy",
+  }),
 });
 
 type EnterIdFormValues = z.infer<typeof enterIdFormSchema>;
 
-const EnterId: FC<EnterIdProps> = ({ setMemory, next }) => {
+const EnterId: FC<EnterIdProps> = ({ memory, setMemory, goTo }) => {
   const { t } = useTranslation(I18NNAMESPACE);
+  const { currentUser } = useLinkAbhaNumberContext();
+
   const [showAuthMethods, setShowAuthMethods] = useState(false);
   const [authMethods, setAuthMethods] = useState<
     (typeof SUPPORTED_AUTH_METHODS)[number][]
@@ -115,6 +129,8 @@ const EnterId: FC<EnterIdProps> = ({ setMemory, next }) => {
       disclaimer_1: false,
       disclaimer_2: false,
       disclaimer_3: false,
+      disclaimer_4: false,
+      disclaimer_5: false,
     },
   });
 
@@ -159,14 +175,29 @@ const EnterId: FC<EnterIdProps> = ({ setMemory, next }) => {
           ...prev,
           transactionId: data.transaction_id,
         }));
-        next();
+        goTo("verify-id");
       }
     },
   });
 
+  const currentUserName = useMemo(
+    () =>
+      [
+        currentUser?.prefix,
+        currentUser?.first_name,
+        currentUser?.last_name,
+        currentUser?.suffix,
+      ]
+        .filter(Boolean)
+        .join(" ") ||
+      currentUser?.username ||
+      t("user"),
+    [currentUser]
+  );
+
   return (
     <Form {...form}>
-      <form className="mt-6 space-y-4">
+      <form className="mt-4 space-y-4">
         <FormField
           control={form.control}
           name="id"
@@ -182,7 +213,7 @@ const EnterId: FC<EnterIdProps> = ({ setMemory, next }) => {
           )}
         />
 
-        {Array.from({ length: 3 }).map((_, index) => (
+        {Array.from({ length: 5 }).map((_, index) => (
           <FormField
             key={`disclaimer_${index + 1}`}
             control={form.control}
@@ -197,7 +228,19 @@ const EnterId: FC<EnterIdProps> = ({ setMemory, next }) => {
                 </FormControl>
                 <div className="space-y-1 leading-none">
                   <FormLabel className="text-sm font-normal">
-                    {t(`abha__disclaimer_${index + 2}`)}
+                    <Trans
+                      t={t}
+                      i18nKey={`abha__disclaimer_${index + 2}`}
+                      values={{ user: currentUserName }}
+                      components={{
+                        input: (
+                          <Input
+                            className="inline w-auto ml-1"
+                            placeholder="Enter Beneficiary Name"
+                          />
+                        ),
+                      }}
+                    />
                   </FormLabel>
                   <FormMessage />
                 </div>
