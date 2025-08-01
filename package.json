@@ -7,7 +7,8 @@
   "license": "ISC",
   "scripts": {
     "start": "vite build --watch & vite preview --port 5173",
-    "build": "vite build",
+    "build": "node scripts/build-version.js && vite build",
+    "build:version": "node scripts/build-version.js",
     "preview": "vite preview"
   },
   "dependencies": {
