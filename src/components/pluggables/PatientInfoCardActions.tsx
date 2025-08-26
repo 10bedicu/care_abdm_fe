@@ -37,7 +37,13 @@ const PatientInfoCardActions: FC<PatientInfoCardActionsProps> = ({
     enabled: !!encounter.patient.id,
   });
 
-  if (!abhaNumber) {
+  const { data: healthFacility } = useQuery({
+    queryKey: ["healthFacility", encounter.facility.id],
+    queryFn: () => apis.healthFacility.get(encounter.facility.id),
+    enabled: !!encounter.facility.id,
+  });
+
+  if (!abhaNumber || !healthFacility || !healthFacility.hf_id) {
     return null;
   }
 
