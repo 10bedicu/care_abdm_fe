@@ -70,7 +70,7 @@ npm run dev
    - Condition: Visible only when the Patient doesn't have thier ABHA Number linked
    - Requirements: Health Facility ID should be linked before linking ABHA Number to the Patient
 
-4. **PatientInfoCardActions**
+4. **EncounterActions**
    - Location: Encounter page, dropdown menu
    - Function: Dialog for creating consent requests for data from 3rd party hospitals
    - Condition: Visible only when the Patient's ABHA number is linked

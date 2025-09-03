@@ -17,12 +17,12 @@ import { apis } from "@/apis";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 
-type PatientInfoCardActionsProps = {
+type EncounterActionsProps = {
   encounter: Encounter;
   className?: string;
 };
 
-const PatientInfoCardActions: FC<PatientInfoCardActionsProps> = ({
+const EncounterActions: FC<EncounterActionsProps> = ({
   encounter,
   className,
 }) => {
@@ -85,4 +85,4 @@ const PatientInfoCardActions: FC<PatientInfoCardActionsProps> = ({
   );
 };
 
-export default PatientInfoCardActions;
+export default EncounterActions;
