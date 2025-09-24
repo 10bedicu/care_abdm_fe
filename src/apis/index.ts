@@ -171,6 +171,41 @@ export const apis = {
       });
     },
 
+    abhaCreateAuthInitViaFace: async () => {
+      return await request<{
+        transaction_id: string;
+        detail: string;
+      }>("/api/abdm/v3/health_id/create/auth_init_via_face/", {
+        method: "POST",
+      });
+    },
+
+    abhaCreateCapturePidViaFace: async (body: { transaction_id: string }) => {
+      return await request<{
+        status: "PENDING" | "VERIFIED" | "FAILED" | "COMPLETE";
+        transaction_id: string;
+        detail: string;
+      }>("/api/abdm/v3/health_id/create/capture_pid_via_face/", {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+    },
+
+    abhaCreateVerifyAadhaarFace: async (body: {
+      transaction_id?: string;
+      aadhaar: string;
+      mobile: string;
+    }) => {
+      return await request<{
+        transaction_id: string;
+        is_new: boolean;
+        abha_number: AbhaNumber;
+      }>("/api/abdm/v3/health_id/create/verify_aadhaar_face/", {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+    },
+
     abhaCreateVerifyAadhaarBio: async (body: {
       transaction_id?: string;
       aadhaar: string;

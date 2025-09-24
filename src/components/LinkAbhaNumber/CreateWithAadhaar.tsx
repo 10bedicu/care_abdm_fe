@@ -44,6 +44,7 @@ import { useForm } from "react-hook-form";
 import { useLinkAbhaNumberContext } from ".";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { QRCodeSVG } from "qrcode.react";
 
 type CreateWithAadhaarProps = {
   onSuccess: (abhaNumber: AbhaNumber) => void;
@@ -56,6 +57,8 @@ type FormMemory = {
 
   transactionId: string;
   abhaNumber?: AbhaNumber;
+  retryCount: number;
+  error?: string;
 };
 
 export const CreateWithAadhaar: FC<CreateWithAadhaarProps> = ({
@@ -79,6 +82,12 @@ export const CreateWithAadhaar: FC<CreateWithAadhaarProps> = ({
           <VerifyAadhaarWithDemographics
             {...({} as VerifyAadhaarWithDemographicsProps)}
           />
+        ),
+      },
+      {
+        id: "verify-aadhaar-with-face",
+        element: (
+          <VerifyAadhaarWithFace {...({} as VerifyAadhaarWithFaceProps)} />
         ),
       },
       {
@@ -114,6 +123,7 @@ export const CreateWithAadhaar: FC<CreateWithAadhaarProps> = ({
       patientName: "",
 
       transactionId: "",
+      retryCount: 0,
     }
   );
 
@@ -282,13 +292,16 @@ const EnterAadhaar: FC<EnterAadhaarProps> = ({ setMemory, goTo }) => {
             )}
           />
         ))}
-        <div className="flex max-sm:flex-col items-center justify-center gap-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           <Button
             type="submit"
             variant="default"
             loading={sendAadhaarOtpMutation.isPending}
             disabled={!form.formState.isValid}
-            className="w-full"
+            className={cn(
+              "w-full",
+              !healthFacility?.benefit_name && "col-span-2"
+            )}
           >
             {t("verify_with_otp")}
           </Button>
@@ -327,6 +340,23 @@ const EnterAadhaar: FC<EnterAadhaarProps> = ({ setMemory, goTo }) => {
             className="w-full"
           >
             {t("verify_with_bio")}
+          </Button>
+          <Button
+            type="button"
+            variant="default"
+            disabled={!form.formState.isValid}
+            onClick={() => {
+              setMemory((prev) => ({
+                ...prev,
+                transactionId: "",
+                aadhaarNumber: form.getValues("aadhaar"),
+                patientName: form.getValues("name"),
+              }));
+              goTo("verify-aadhaar-with-face");
+            }}
+            className="w-full"
+          >
+            {t("verify_with_face")}
           </Button>
         </div>
       </form>
@@ -838,6 +868,211 @@ const VerifyAadhaarWithDemographics: FC<VerifyAadhaarWithDemographicsProps> = ({
         >
           {t("verify_demographics")}
         </Button>
+      </form>
+    </Form>
+  );
+};
+
+type VerifyAadhaarWithFaceProps = InjectedStepProps<FormMemory>;
+
+const verifyAadhaarWithFaceFormSchema = z.object({
+  _aadhaar: z.string(),
+  mobile: z.string().length(10, {
+    message: "Mobile number must be 10 digits",
+  }),
+});
+
+type VerifyAadhaarWithFaceFormValues = z.infer<
+  typeof verifyAadhaarWithBioFormSchema
+>;
+
+const VerifyAadhaarWithFace: FC<VerifyAadhaarWithFaceProps> = ({
+  memory,
+  setMemory,
+  goTo,
+}) => {
+  const { t } = useTranslation(I18NNAMESPACE);
+  const [isPolling, setIsPolling] = useState(false);
+
+  const form = useForm<VerifyAadhaarWithFaceFormValues>({
+    resolver: zodResolver(verifyAadhaarWithFaceFormSchema),
+    defaultValues: {
+      _aadhaar: memory?.aadhaarNumber ?? "",
+      mobile: "",
+    },
+  });
+
+  const verifyAadhaarFaceMutation = useMutation({
+    mutationFn: apis.healthId.abhaCreateVerifyAadhaarFace,
+    onSuccess: (data) => {
+      if (data) {
+        setMemory((prev) => ({
+          ...prev,
+          transactionId: data.transaction_id,
+          mobileNumber: form.getValues("mobile"),
+          abhaNumber: data.abha_number,
+        }));
+
+        if (!data.transaction_id) {
+          goTo("show-abha-profile");
+          return;
+        }
+
+        goTo("handle-existing-abha");
+      }
+    },
+    onError: (error) => {
+      toast.error(error.message);
+      setMemory((prev) => ({
+        ...prev,
+        transactionId: "",
+        error: error.message,
+      }));
+    },
+  });
+
+  const capturePidViaFaceMutation = useMutation({
+    mutationFn: apis.healthId.abhaCreateCapturePidViaFace,
+    onSuccess: (data) => {
+      if (data) {
+        if (data.status === "COMPLETE") {
+          setIsPolling(false);
+          setMemory((prev) => ({
+            ...prev,
+            transactionId: data.transaction_id,
+          }));
+
+          verifyAadhaarFaceMutation.mutate({
+            aadhaar: form.getValues("_aadhaar"),
+            mobile: form.getValues("mobile"),
+            transaction_id: memory?.transactionId,
+          });
+        } else if (data.status === "FAILED") {
+          setIsPolling(false);
+          setMemory((prev) => ({
+            ...prev,
+            error: data.detail,
+          }));
+        }
+      }
+    },
+    onError: (error) => {
+      setIsPolling(false);
+      setMemory((prev) => ({
+        ...prev,
+        error: error.message,
+      }));
+      toast.error(error.message);
+    },
+  });
+
+  const authInitViaFaceMutation = useMutation({
+    mutationFn: apis.healthId.abhaCreateAuthInitViaFace,
+    onSuccess: (data) => {
+      if (data) {
+        setMemory((prev) => ({ ...prev, transactionId: data.transaction_id }));
+        setIsPolling(true);
+      }
+    },
+  });
+
+  useEffect(() => {
+    // if auth init is success, capture pid via face every 5 seconds till status is completed
+    if (isPolling) {
+      const interval = setInterval(() => {
+        capturePidViaFaceMutation.mutate({
+          transaction_id: authInitViaFaceMutation.data?.transaction_id ?? "",
+        });
+      }, 10000);
+
+      return () => clearInterval(interval);
+    }
+  }, [isPolling]);
+
+  function onSubmit(_values: VerifyAadhaarWithFaceFormValues) {
+    authInitViaFaceMutation.mutate();
+  }
+
+  return (
+    <Form {...form}>
+      <form
+        onSubmit={(e) => {
+          e.stopPropagation();
+          form.handleSubmit(onSubmit)(e);
+        }}
+        className="mt-6 space-y-4"
+      >
+        <FormField
+          control={form.control}
+          disabled
+          name="_aadhaar"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Aadhaar Number / Virtual ID</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="Enter 12 digital Aadhaar  number OR 16 digit virtual ID"
+                  {...field}
+                />
+              </FormControl>
+              <FormDescription>
+                Aadhaar number will not be stored by CARE.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="mobile"
+          disabled={!authInitViaFaceMutation.isIdle}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Mobile Number</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter 10 digit mobile number" {...field} />
+              </FormControl>
+              <FormDescription>
+                If the given mobile number is not linked with Aadhaar, we'll
+                send you an OTP to verify.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {authInitViaFaceMutation.isSuccess && (
+          <div className="flex flex-col items-center justify-center border-2 border-dashed border-secondary-600 rounded-lg p-4">
+            <QRCodeSVG
+              value={`https://phrsbx.abdm.gov.in/face-auth?txnId=${authInitViaFaceMutation.data?.transaction_id}`}
+              className="size-80 text-secondary-500 rounded-lg"
+            />
+          </div>
+        )}
+
+        {memory?.error && <div className="text-red-500">{memory.error}</div>}
+        {(!authInitViaFaceMutation.isSuccess ||
+          ((memory?.retryCount ?? 0) < 3 && memory?.error)) && (
+          <Button
+            type="button"
+            variant="default"
+            loading={authInitViaFaceMutation.isPending}
+            disabled={!form.formState.isValid}
+            onClick={() => {
+              setMemory((prev) => ({
+                ...prev,
+                retryCount: (prev?.retryCount ?? 0) + 1,
+                error: "",
+              }));
+              authInitViaFaceMutation.mutate();
+            }}
+          >
+            {!memory?.retryCount
+              ? t("initiate_face_auth")
+              : t("retry_face_auth")}
+          </Button>
+        )}
       </form>
     </Form>
   );
