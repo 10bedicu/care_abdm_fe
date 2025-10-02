@@ -22,6 +22,7 @@ const manifest = {
     PatientRegistrationForm: lazy(
       () => import("./components/pluggables/PatientRegistrationForm")
     ),
+    PatientSearch: lazy(() => import("./components/pluggables/PatientSearch")),
   },
   navItems: [],
   encounterTabs: {

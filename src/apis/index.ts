@@ -13,6 +13,7 @@ import { HealthFacility } from "../types/healthFacility";
 import { HealthInformation } from "../types/healthInformation";
 import { PaginatedResponse } from "./types";
 import { User } from "@/types/user";
+import { PartialPatient } from "@/types/patient";
 
 // FIXME: Move all the api specific types to a ./types.ts file
 
@@ -324,6 +325,14 @@ export const apis = {
     getAbhaCard: async (query: { abha_id?: string; type: "pdf" | "png" }) => {
       return await request<Blob>(
         "/api/abdm/v3/health_id/abha_card/" + queryString(query)
+      );
+    },
+  },
+
+  hip: {
+    getPatientByToken: async (token: string) => {
+      return await request<PartialPatient>(
+        `/api/abdm/v3/hip/patient/fetch-by-token/${token}/`
       );
     },
   },
