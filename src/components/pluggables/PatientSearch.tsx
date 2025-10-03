@@ -18,7 +18,7 @@ type PatientSearchProps = {
   facilityId: string;
 };
 
-const PatientSearch: FC<PatientSearchProps> = ({ state }) => {
+const PatientSearch: FC<PatientSearchProps> = ({ state, facilityId }) => {
   const [token, setToken] = useState<string>("");
   const debouncedToken = useDebounceState(token, 500);
 
@@ -28,7 +28,17 @@ const PatientSearch: FC<PatientSearchProps> = ({ state }) => {
     enabled: !!debouncedToken,
   });
 
+  const { data: healthFacility } = useQuery({
+    queryKey: ["healthFacility", facilityId],
+    queryFn: () => apis.healthFacility.get(facilityId),
+    enabled: !!facilityId,
+  });
+
   useEffect(() => {
+    if (!healthFacility) {
+      return;
+    }
+
     const searchOptions = [
       {
         key: "abha_token",
@@ -54,7 +64,7 @@ const PatientSearch: FC<PatientSearchProps> = ({ state }) => {
         ),
       ...searchOptions,
     ]);
-  }, []);
+  }, [healthFacility]);
 
   useEffect(() => {
     if (token) {
