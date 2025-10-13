@@ -282,7 +282,7 @@ const EnterAadhaar: FC<EnterAadhaarProps> = ({ setMemory, goTo }) => {
             )}
           />
         ))}
-        <div className="flex items-center justify-center gap-2">
+        <div className="flex max-sm:flex-col items-center justify-center gap-2">
           <Button
             type="submit"
             variant="default"
