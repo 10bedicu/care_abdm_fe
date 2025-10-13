@@ -13,8 +13,8 @@ const manifest = {
       () =>
         import("./components/pluggables/PatientDetailsTabDemographyGeneralInfo")
     ),
-    PatientInfoCardActions: lazy(
-      () => import("./components/pluggables/PatientInfoCardActions")
+    EncounterActions: lazy(
+      () => import("./components/pluggables/EncounterActions")
     ),
     FacilityHomeActions: lazy(
       () => import("./components/pluggables/FacilityHomeActions")
