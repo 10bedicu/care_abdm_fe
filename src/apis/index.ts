@@ -4,13 +4,14 @@ import {
   ConsentHIType,
   ConsentPurpose,
   ConsentRequest,
-} from "../types/consent";
+} from "@/types/consent";
 import { queryString, request } from "./request";
+import { PartialPatient } from "@/types/patient";
 
-import { AbhaNumber } from "../types/abhaNumber";
+import { AbhaNumber } from "@/types/abhaNumber";
 import { GovtOrganization } from "@/types/govtOrganization";
-import { HealthFacility } from "../types/healthFacility";
-import { HealthInformation } from "../types/healthInformation";
+import { HealthFacility } from "@/types/healthFacility";
+import { HealthInformation } from "@/types/healthInformation";
 import { PaginatedResponse } from "./types";
 import { User } from "@/types/user";
 
@@ -411,6 +412,14 @@ export const apis = {
     }) => {
       return await request<PaginatedResponse<GovtOrganization>>(
         "/api/v1/govt/organization/" + queryString(query)
+      );
+    },
+  },
+
+  hip: {
+    getPatientByToken: async (token: string) => {
+      return await request<PartialPatient>(
+        `/api/abdm/v3/hip/patient/fetch-by-token/${token}/`
       );
     },
   },
