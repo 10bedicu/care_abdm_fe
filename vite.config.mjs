@@ -23,6 +23,17 @@ export default defineConfig({
     tailwindcss(),
     react(),
   ],
+  server: {
+    port: 5173,
+    allowedHosts: true,
+    host: "0.0.0.0",
+    cors: true,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
+      "Access-Control-Allow-Headers": "*",
+    },
+  },
   build: {
     target: "esnext",
     minify: false,
@@ -46,6 +57,12 @@ export default defineConfig({
     port: 5173,
     allowedHosts: true,
     host: "0.0.0.0",
+    cors: true,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
+      "Access-Control-Allow-Headers": "*",
+    },
   },
   resolve: {
     alias: {
