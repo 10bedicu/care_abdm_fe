@@ -44,7 +44,7 @@ export const GenerateScanAndShareQR: FC<GenerateScanAndShareQRProps> = ({
   const scanAndShareQrValue = useMemo(() => {
     return scanAndShareUrl
       ?.replace("<HF_ID>", healthFacilityId)
-      ?.replace("<COUNTER_NAME>", scanAndShareQrForm.watch("counterName"));
+      ?.replace("<COUNTER_ID>", scanAndShareQrForm.watch("counterName"));
   }, [scanAndShareQrForm.watch("counterName"), healthFacilityId]);
 
   const downloadQR = () => {

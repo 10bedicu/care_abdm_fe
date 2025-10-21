@@ -4,13 +4,14 @@ import {
   ConsentHIType,
   ConsentPurpose,
   ConsentRequest,
-} from "../types/consent";
+} from "@/types/consent";
 import { queryString, request } from "./request";
+import { PartialPatient } from "@/types/patient";
 
-import { AbhaNumber } from "../types/abhaNumber";
+import { AbhaNumber } from "@/types/abhaNumber";
 import { GovtOrganization } from "@/types/govtOrganization";
-import { HealthFacility } from "../types/healthFacility";
-import { HealthInformation } from "../types/healthInformation";
+import { HealthFacility } from "@/types/healthFacility";
+import { HealthInformation } from "@/types/healthInformation";
 import { PaginatedResponse } from "./types";
 import { User } from "@/types/user";
 
@@ -166,6 +167,41 @@ export const apis = {
         is_new: boolean;
         abha_number: AbhaNumber;
       }>("/api/abdm/v3/health_id/create/verify_aadhaar_demographics/", {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+    },
+
+    abhaCreateAuthInitViaFace: async () => {
+      return await request<{
+        transaction_id: string;
+        detail: string;
+      }>("/api/abdm/v3/health_id/create/auth_init_via_face/", {
+        method: "POST",
+      });
+    },
+
+    abhaCreateCapturePidViaFace: async (body: { transaction_id: string }) => {
+      return await request<{
+        status: "PENDING" | "VERIFIED" | "FAILED" | "COMPLETE";
+        transaction_id: string;
+        detail: string;
+      }>("/api/abdm/v3/health_id/create/capture_pid_via_face/", {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+    },
+
+    abhaCreateVerifyAadhaarFace: async (body: {
+      transaction_id?: string;
+      aadhaar: string;
+      mobile: string;
+    }) => {
+      return await request<{
+        transaction_id: string;
+        is_new: boolean;
+        abha_number: AbhaNumber;
+      }>("/api/abdm/v3/health_id/create/verify_aadhaar_face/", {
         method: "POST",
         body: JSON.stringify(body),
       });
@@ -376,6 +412,14 @@ export const apis = {
     }) => {
       return await request<PaginatedResponse<GovtOrganization>>(
         "/api/v1/govt/organization/" + queryString(query)
+      );
+    },
+  },
+
+  hip: {
+    getPatientByToken: async (token: string) => {
+      return await request<PartialPatient>(
+        `/api/abdm/v3/hip/patient/fetch-by-token/${token}/`
       );
     },
   },
