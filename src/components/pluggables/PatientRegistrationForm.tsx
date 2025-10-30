@@ -7,6 +7,7 @@ import { LinkAbhaNumber } from "../LinkAbhaNumber";
 import { ShowAbhaProfile } from "../LinkAbhaNumber/ShowAbhaProfile";
 import { UseFormReturn } from "react-hook-form";
 import { apis } from "@/apis";
+import { enforceAbhaNumberLinking } from "@/config";
 import { toast } from "@/lib/utils";
 
 type PatientRegistrationFormProps = {
@@ -21,6 +22,12 @@ const PatientRegistrationForm: FC<PatientRegistrationFormProps> = ({
   patientId,
 }) => {
   const queryClient = useQueryClient();
+
+  console.log(
+    "_--------------------------------_",
+    enforceAbhaNumberLinking,
+    "_--------------------------------_"
+  );
 
   const { data: abhaNumber, refetch } = useQuery({
     queryKey: ["abhaNumber", patientId],
@@ -85,6 +92,7 @@ const PatientRegistrationForm: FC<PatientRegistrationFormProps> = ({
     return (
       <div className="abdm-container flex justify-end w-full">
         <LinkAbhaNumber
+          enforceLinking={enforceAbhaNumberLinking}
           facilityId={facilityId}
           type="button"
           variant="outline"
