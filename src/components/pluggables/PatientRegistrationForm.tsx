@@ -23,12 +23,6 @@ const PatientRegistrationForm: FC<PatientRegistrationFormProps> = ({
 }) => {
   const queryClient = useQueryClient();
 
-  console.log(
-    "_--------------------------------_",
-    enforceAbhaNumberLinking,
-    "_--------------------------------_"
-  );
-
   const { data: abhaNumber, refetch } = useQuery({
     queryKey: ["abhaNumber", patientId],
     queryFn: () => apis.abhaNumber.get(patientId!),
