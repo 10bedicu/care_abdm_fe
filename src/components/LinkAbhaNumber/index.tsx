@@ -7,24 +7,24 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
+import { FC, createContext, useContext, useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { createContext, FC, useState, useContext } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { AbhaNumber } from "@/types/abhaNumber";
 import { CreateWithAadhaar } from "./CreateWithAadhaar";
+import { HealthFacility } from "@/types/healthFacility";
 import { IdCardIcon } from "lucide-react";
 import { LinkWithOtp } from "./LinkWithOtp";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { User } from "@/types/user";
 import { apis } from "@/apis";
 import { useQuery } from "@tanstack/react-query";
-import { HealthFacility } from "@/types/healthFacility";
-import { User } from "@/types/user";
 
 type LinkAbhaNumberContextValue = {
   healthFacility?: HealthFacility;
@@ -34,6 +34,7 @@ type LinkAbhaNumberContextValue = {
 const LinkAbhaNumberContext = createContext<LinkAbhaNumberContextValue>({});
 
 type LinkAbhaNumberProps = ButtonProps & {
+  enforceLinking?: boolean;
   facilityId?: string;
   onSuccess: (abhaNumber: AbhaNumber) => void;
   defaultMode?: "new" | "existing";
@@ -42,10 +43,11 @@ type LinkAbhaNumberProps = ButtonProps & {
 export const LinkAbhaNumber: FC<LinkAbhaNumberProps> = ({
   facilityId,
   onSuccess,
+  enforceLinking = false,
   defaultMode = "new",
   ...props
 }) => {
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(enforceLinking);
 
   const handleOnSuccess = (abhaNumber: AbhaNumber) => {
     setIsDrawerOpen(false);
@@ -70,7 +72,12 @@ export const LinkAbhaNumber: FC<LinkAbhaNumberProps> = ({
         currentUser,
       }}
     >
-      <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
+      <Drawer
+        dismissible={!enforceLinking}
+        defaultOpen={enforceLinking}
+        open={isDrawerOpen}
+        onOpenChange={setIsDrawerOpen}
+      >
         <DrawerTrigger disabled={!healthFacility} className="abdm-container">
           <TooltipProvider>
             <Tooltip>
