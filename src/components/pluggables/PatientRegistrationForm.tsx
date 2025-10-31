@@ -87,6 +87,7 @@ const PatientRegistrationForm: FC<PatientRegistrationFormProps> = ({
       <div className="abdm-container flex justify-end w-full">
         <LinkAbhaNumber
           enforceLinking={enforceAbhaNumberLinking}
+          backUrl={`/facility/${facilityId}/patients`}
           facilityId={facilityId}
           type="button"
           variant="outline"
