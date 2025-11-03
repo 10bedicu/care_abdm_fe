@@ -1,4 +1,5 @@
-import { Button, ButtonProps } from "@/components/ui/button";
+import { Button, ButtonProps, buttonVariants } from "@/components/ui/button";
+import { ChevronLeftIcon, IdCardIcon } from "lucide-react";
 import {
   Drawer,
   DrawerContent,
@@ -7,24 +8,25 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
+import { FC, createContext, useContext, useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { createContext, FC, useState, useContext } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { AbhaNumber } from "@/types/abhaNumber";
 import { CreateWithAadhaar } from "./CreateWithAadhaar";
-import { IdCardIcon } from "lucide-react";
+import { HealthFacility } from "@/types/healthFacility";
+import { Link } from "raviger";
 import { LinkWithOtp } from "./LinkWithOtp";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { apis } from "@/apis";
-import { useQuery } from "@tanstack/react-query";
-import { HealthFacility } from "@/types/healthFacility";
 import { User } from "@/types/user";
+import { apis } from "@/apis";
+import { cn } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
 
 type LinkAbhaNumberContextValue = {
   healthFacility?: HealthFacility;
@@ -34,6 +36,8 @@ type LinkAbhaNumberContextValue = {
 const LinkAbhaNumberContext = createContext<LinkAbhaNumberContextValue>({});
 
 type LinkAbhaNumberProps = ButtonProps & {
+  enforceLinking?: boolean;
+  backUrl?: string;
   facilityId?: string;
   onSuccess: (abhaNumber: AbhaNumber) => void;
   defaultMode?: "new" | "existing";
@@ -42,10 +46,12 @@ type LinkAbhaNumberProps = ButtonProps & {
 export const LinkAbhaNumber: FC<LinkAbhaNumberProps> = ({
   facilityId,
   onSuccess,
+  backUrl,
+  enforceLinking = false,
   defaultMode = "new",
   ...props
 }) => {
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(enforceLinking);
 
   const handleOnSuccess = (abhaNumber: AbhaNumber) => {
     setIsDrawerOpen(false);
@@ -70,7 +76,11 @@ export const LinkAbhaNumber: FC<LinkAbhaNumberProps> = ({
         currentUser,
       }}
     >
-      <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
+      <Drawer
+        dismissible={!enforceLinking}
+        open={isDrawerOpen}
+        onOpenChange={setIsDrawerOpen}
+      >
         <DrawerTrigger disabled={!healthFacility} className="abdm-container">
           <TooltipProvider>
             <Tooltip>
@@ -105,12 +115,27 @@ export const LinkAbhaNumber: FC<LinkAbhaNumberProps> = ({
         <DrawerContent className="abdm-container">
           <ScrollArea className="h-[90vh]">
             <div className="md:mx-auto max-w-screen md:max-w-md max-md:p-4">
-              <DrawerHeader>
-                <DrawerTitle>Generate/Link ABHA Number</DrawerTitle>
-                <DrawerDescription>
-                  Generate/link patient's ABHA details for easy access to
-                  healthcare services.
-                </DrawerDescription>
+              <DrawerHeader className="flex justify-between items-center max-sm:flex-col">
+                <div className="flex-1">
+                  <DrawerTitle>Generate/Link ABHA Number</DrawerTitle>
+                  <DrawerDescription>
+                    Generate/link patient's ABHA details for easy access to
+                    healthcare services.
+                  </DrawerDescription>
+                </div>
+
+                {backUrl && (
+                  <Link
+                    href={backUrl}
+                    className={cn(
+                      buttonVariants({ variant: "outline" }),
+                      "max-sm:w-full"
+                    )}
+                  >
+                    <ChevronLeftIcon className="h-4 w-4" />
+                    Go back
+                  </Link>
+                )}
               </DrawerHeader>
               <Tabs defaultValue={defaultMode} orientation="vertical">
                 <TabsList className="w-full sticky top-0 bg-gray-200 z-10 py-6">
