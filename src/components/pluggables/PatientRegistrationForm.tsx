@@ -57,8 +57,11 @@ const PatientRegistrationForm: FC<PatientRegistrationFormProps> = ({
       if (
         isFirstSuccess &&
         mutation?.state.status === "success" &&
-        mutation?.options.mutationKey?.includes("create_patient") &&
-        mutation?.state.data?.id
+        (mutation?.options.mutationKey?.includes("create_patient") ||
+          mutation?.options.mutationKey?.includes("update_patient")) &&
+        mutation?.state.data?.id &&
+        form.watch("abha_id") &&
+        !abhaNumber?.patient
       ) {
         isFirstSuccess = false;
 
