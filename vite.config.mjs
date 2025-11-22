@@ -18,6 +18,7 @@ export default defineConfig({
         "react-i18next",
         "@tanstack/react-query",
         "raviger",
+        "sonner",
       ],
     }),
     tailwindcss(),
