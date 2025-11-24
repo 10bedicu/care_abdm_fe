@@ -6,13 +6,13 @@ import {
   ConsentRequest,
 } from "@/types/consent";
 import { queryString, request } from "./request";
-import { PartialPatient } from "@/types/patient";
 
 import { AbhaNumber } from "@/types/abhaNumber";
 import { GovtOrganization } from "@/types/govtOrganization";
 import { HealthFacility } from "@/types/healthFacility";
 import { HealthInformation } from "@/types/healthInformation";
 import { PaginatedResponse } from "./types";
+import { PartialPatient } from "@/types/patient";
 import { User } from "@/types/user";
 
 // FIXME: Move all the api specific types to a ./types.ts file
@@ -417,9 +417,12 @@ export const apis = {
   },
 
   hip: {
-    getPatientByToken: async (token: string) => {
+    getPatientByToken: async (query: {
+      token: number;
+      facility_id: string;
+    }) => {
       return await request<PartialPatient>(
-        `/api/abdm/v3/hip/patient/fetch-by-token/${token}/`
+        `/api/abdm/v3/hip/patient/fetch-by-token/` + queryString(query)
       );
     },
   },

@@ -1,34 +1,40 @@
-import { FC, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { apis } from "@/apis";
-import { PartialPatient } from "@/types/patient";
-import { useDebouncedState } from "@/hooks/useDebouncedState";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogDescription,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Link } from "raviger";
+import { FC, useMemo, useState } from "react";
+
 import { ArrowRightIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { PartialPatient } from "@/types/patient";
+import { Skeleton } from "@/components/ui/skeleton";
+import { apis } from "@/apis";
 import { navigate } from "raviger";
+import { useDebouncedState } from "@/hooks/useDebouncedState";
+import { useQuery } from "@tanstack/react-query";
 
 type TokenSearchDialogProps = {
+  facilityId: string;
   trigger?: React.ReactNode;
 };
 
-const TokenSearchDialog: FC<TokenSearchDialogProps> = ({ trigger }) => {
+const TokenSearchDialog: FC<TokenSearchDialogProps> = ({
+  trigger,
+  facilityId,
+}) => {
   const [open, setOpen] = useState(false);
-  const [token, setToken] = useState("");
+  const [token, setToken] = useState<number | undefined>();
   const debouncedToken = useDebouncedState(token, 300);
 
   const isEnabled = useMemo(
-    () => debouncedToken.trim().length > 0,
+    () =>
+      debouncedToken !== undefined &&
+      debouncedToken.toString().trim().length > 0,
     [debouncedToken]
   );
 
@@ -39,8 +45,12 @@ const TokenSearchDialog: FC<TokenSearchDialogProps> = ({ trigger }) => {
     error,
   } = useQuery({
     queryKey: ["patient-by-token", debouncedToken],
-    queryFn: () => apis.hip.getPatientByToken(debouncedToken.trim()),
-    enabled: isEnabled && open,
+    queryFn: () =>
+      apis.hip.getPatientByToken({
+        token: debouncedToken as number,
+        facility_id: facilityId,
+      }),
+    enabled: isEnabled && open && !!facilityId,
     retry: false,
   });
 
@@ -62,7 +72,9 @@ const TokenSearchDialog: FC<TokenSearchDialogProps> = ({ trigger }) => {
           <div className="flex items-center justify-center">
             <Input
               value={token}
-              onChange={(e) => setToken(e.target.value.replace(/\D/g, ""))}
+              onChange={(e) =>
+                setToken(Number(e.target.value.replace(/\D/g, "")) || undefined)
+              }
               inputMode="numeric"
               pattern="[0-9]*"
               maxLength={6}
