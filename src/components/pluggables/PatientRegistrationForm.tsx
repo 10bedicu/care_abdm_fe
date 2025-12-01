@@ -6,8 +6,8 @@ import { Label } from "@/components/ui/label";
 import { LinkAbhaNumber } from "../LinkAbhaNumber";
 import { ShowAbhaProfile } from "../LinkAbhaNumber/ShowAbhaProfile";
 import { UseFormReturn } from "react-hook-form";
+import { WithMeta } from "@/types/meta";
 import { apis } from "@/apis";
-import { enforceAbhaNumberLinking } from "@/config";
 import { toast } from "@/lib/utils";
 
 type PatientRegistrationFormProps = {
@@ -16,10 +16,11 @@ type PatientRegistrationFormProps = {
   patientId?: string;
 };
 
-const PatientRegistrationForm: FC<PatientRegistrationFormProps> = ({
+const PatientRegistrationForm: FC<WithMeta<PatientRegistrationFormProps>> = ({
   form,
   facilityId,
   patientId,
+  __meta,
 }) => {
   const queryClient = useQueryClient();
 
@@ -89,9 +90,9 @@ const PatientRegistrationForm: FC<PatientRegistrationFormProps> = ({
     return (
       <div className="abdm-container flex justify-end w-full">
         <LinkAbhaNumber
-          enforceLinking={enforceAbhaNumberLinking}
+          enforceLinking={__meta?.config?.enforceAbhaNumberLinking}
           backUrl={
-            enforceAbhaNumberLinking
+            __meta?.config?.enforceAbhaNumberLinking
               ? `/facility/${facilityId}/patients`
               : undefined
           }

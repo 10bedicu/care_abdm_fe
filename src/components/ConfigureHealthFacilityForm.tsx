@@ -26,6 +26,7 @@ import { GenerateScanAndShareQR } from "./GenerateScanAndShareQR";
 import { HealthFacility } from "@/types/healthFacility";
 import { I18NNAMESPACE } from "@/lib/constants";
 import { Input } from "@/components/ui/input";
+import { Meta } from "@/types/meta";
 import { apis } from "@/apis";
 import { toast } from "@/lib/utils";
 import { useForm } from "react-hook-form";
@@ -34,6 +35,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 type ConfigureHealthFacilityFormProps = {
   facilityId: string;
   onSuccess?: (data: HealthFacility) => void;
+  meta?: Meta;
 };
 
 const configureHealthFacilityFormSchema = z.object({
@@ -44,9 +46,11 @@ type ConfigureHealthFacilityFormValues = z.infer<
   typeof configureHealthFacilityFormSchema
 >;
 
-export const ConfigureHealthFacilityForm: FC<
-  ConfigureHealthFacilityFormProps
-> = ({ facilityId, onSuccess }) => {
+export const ConfigureHealthFacilityForm: FC<ConfigureHealthFacilityFormProps> = ({
+  facilityId,
+  onSuccess,
+  meta,
+}) => {
   const { t } = useTranslation(I18NNAMESPACE);
 
   const { data: healthFacility, refetch } = useQuery({
@@ -221,7 +225,10 @@ export const ConfigureHealthFacilityForm: FC<
       </Form>
 
       {healthFacility && (
-        <GenerateScanAndShareQR healthFacilityId={healthFacility.hf_id} />
+        <GenerateScanAndShareQR
+          healthFacilityId={healthFacility.hf_id}
+          scanAndShareUrl={meta?.config?.scanAndShareUrl}
+        />
       )}
     </div>
   );

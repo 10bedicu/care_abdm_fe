@@ -1,11 +1,13 @@
+import { FileDownIcon, ImageDownIcon } from "lucide-react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+
+import { Button } from "@/components/ui/button";
 import { FC } from "react";
 import { I18NNAMESPACE } from "@/lib/constants";
 import { Patient } from "@/types/patient";
+import { WithMeta } from "@/types/meta";
 import { apis } from "@/apis";
-import { useMutation, useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
-import { ImageDownIcon, FileDownIcon } from "lucide-react";
 
 type PatientDetailsTabDemographyGeneralInfoProps = {
   patientData: Patient;
@@ -14,7 +16,7 @@ type PatientDetailsTabDemographyGeneralInfoProps = {
 };
 
 const PatientDetailsTabDemographyGeneralInfo: FC<
-  PatientDetailsTabDemographyGeneralInfoProps
+  WithMeta<PatientDetailsTabDemographyGeneralInfoProps>
 > = ({ patientId }) => {
   const { t } = useTranslation(I18NNAMESPACE);
 

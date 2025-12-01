@@ -3,6 +3,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { FC } from "react";
 import { LinkAbhaNumber } from "@/components/LinkAbhaNumber";
 import { Patient } from "@/types/patient";
+import { WithMeta } from "@/types/meta";
 import { apis } from "@/apis";
 import { toast } from "@/lib/utils";
 
@@ -12,7 +13,7 @@ type PatientHomeActionsProps = {
   className?: string;
 };
 
-const PatientHomeActions: FC<PatientHomeActionsProps> = ({
+const PatientHomeActions: FC<WithMeta<PatientHomeActionsProps>> = ({
   patient,
   facilityId,
   className,
