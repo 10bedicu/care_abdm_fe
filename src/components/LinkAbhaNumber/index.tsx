@@ -48,7 +48,7 @@ export const LinkAbhaNumber: FC<LinkAbhaNumberProps> = ({
   onSuccess,
   backUrl,
   enforceLinking = false,
-  defaultMode = "new",
+  defaultMode = "existing",
   ...props
 }) => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(enforceLinking);
