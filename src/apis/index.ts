@@ -12,7 +12,7 @@ import { GovtOrganization } from "@/types/govtOrganization";
 import { HealthFacility } from "@/types/healthFacility";
 import { HealthInformation } from "@/types/healthInformation";
 import { PaginatedResponse } from "./types";
-import { PartialPatient } from "@/types/patient";
+import { Patient } from "@/types/patient";
 import { User } from "@/types/user";
 
 // FIXME: Move all the api specific types to a ./types.ts file
@@ -421,7 +421,7 @@ export const apis = {
       token: number;
       facility_id: string;
     }) => {
-      return await request<PartialPatient>(
+      return await request<Patient>(
         `/api/abdm/v3/hip/patient/fetch-by-token/` + queryString(query)
       );
     },
