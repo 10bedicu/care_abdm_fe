@@ -36,15 +36,16 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { AbhaNumber } from "@/types/abhaNumber";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { QRCodeSVG } from "qrcode.react";
 import { Textarea } from "@/components/ui/textarea";
 import { apis } from "@/apis";
 import { cn } from "@/lib/utils";
+import { faceAuthUrl } from "@/config";
 import { toast } from "@/lib/utils";
 import { useForm } from "react-hook-form";
 import { useLinkAbhaNumberContext } from ".";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { QRCodeSVG } from "qrcode.react";
 
 type CreateWithAadhaarProps = {
   onSuccess: (abhaNumber: AbhaNumber) => void;
@@ -1045,7 +1046,7 @@ const VerifyAadhaarWithFace: FC<VerifyAadhaarWithFaceProps> = ({
         {authInitViaFaceMutation.isSuccess && (
           <div className="flex flex-col items-center justify-center border-2 border-dashed border-secondary-600 rounded-lg p-4">
             <QRCodeSVG
-              value={`https://phrsbx.abdm.gov.in/face-auth?txnId=${authInitViaFaceMutation.data?.transaction_id}`}
+              value={`${faceAuthUrl}?txnId=${authInitViaFaceMutation.data?.transaction_id}`}
               className="size-80 text-secondary-500 rounded-lg"
             />
           </div>

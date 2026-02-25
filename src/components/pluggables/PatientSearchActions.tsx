@@ -1,10 +1,10 @@
-import { apis } from "@/apis";
-import { useQuery } from "@tanstack/react-query";
-import { FC } from "react";
-import TokenSearchDialog from "@/components/TokenSearchDialog";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { FC } from "react";
 import { HashIcon } from "lucide-react";
+import TokenSearchDialog from "@/components/TokenSearchDialog";
+import { apis } from "@/apis";
+import { cn } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
 
 type PatientSearchActionsProps = {
   facilityId: string;
@@ -28,6 +28,7 @@ const PatientSearchActions: FC<PatientSearchActionsProps> = ({
   return (
     <div className="flex items-center gap-2">
       <TokenSearchDialog
+        facilityId={facilityId}
         trigger={
           <Button variant="default" className={cn(className, "flex gap-2")}>
             <HashIcon />
