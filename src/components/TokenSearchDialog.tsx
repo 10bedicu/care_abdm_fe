@@ -11,7 +11,7 @@ import { FC, useMemo, useState } from "react";
 import { ArrowRightIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PartialPatient } from "@/types/patient";
+import { Patient } from "@/types/patient";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apis } from "@/apis";
 import { navigate } from "raviger";
@@ -107,7 +107,7 @@ const TokenSearchDialog: FC<TokenSearchDialogProps> = ({
             )}
 
             {!isFetching && isEnabled && patient && (
-              <PartialPatientCard patient={patient} />
+              <PatientCard patient={patient} />
             )}
           </div>
         </div>
@@ -116,11 +116,24 @@ const TokenSearchDialog: FC<TokenSearchDialogProps> = ({
   );
 };
 
-const PartialPatientCard: FC<{ patient: PartialPatient }> = ({ patient }) => {
-  const [yearOfBirth, setYearOfBirth] = useState("");
+const PatientCard: FC<{ patient: Patient }> = ({ patient }) => {
+  const yearOfBirth = useMemo(() => {
+    return patient.year_of_birth ?? patient.date_of_birth?.split("-")[0];
+  }, [patient]);
 
   return (
-    <div className="border rounded-md p-4">
+    <div
+      onClick={() => {
+        navigate("patients/verify", {
+          query: {
+            phone_number: patient.phone_number,
+            year_of_birth: yearOfBirth,
+            partial_id: patient.partial_id || patient.id.slice(0, 5),
+          },
+        });
+      }} 
+      className="border rounded-md p-4 cursor-pointer"
+    >
       <div className="flex items-center justify-between">
         <div className="space-y-1">
           <div className="font-medium text-base">{patient.name}</div>
@@ -131,36 +144,6 @@ const PartialPatientCard: FC<{ patient: PartialPatient }> = ({ patient }) => {
         <div className="text-xs text-muted-foreground">
           #{patient.id.slice(0, 8)}
         </div>
-      </div>
-
-      <div className="mt-3 flex items-center gap-3">
-        <Input
-          placeholder="Enter the year of birth to verify"
-          inputMode="numeric"
-          pattern="[0-9]*"
-          value={yearOfBirth}
-          onChange={(e) => setYearOfBirth(e.target.value)}
-          minLength={4}
-          maxLength={4}
-          className="flex-1"
-        />
-        <Button
-          size="icon"
-          variant="outline"
-          aria-label="Open patient page"
-          disabled={yearOfBirth.length !== 4}
-          onClick={() => {
-            navigate("patients/verify", {
-              query: {
-                phone_number: patient.phone_number,
-                year_of_birth: yearOfBirth,
-                partial_id: patient.partial_id || patient.id.slice(0, 5),
-              },
-            });
-          }}
-        >
-          <ArrowRightIcon />
-        </Button>
       </div>
     </div>
   );
