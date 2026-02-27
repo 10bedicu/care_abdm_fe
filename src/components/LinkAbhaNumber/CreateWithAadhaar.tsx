@@ -1185,7 +1185,7 @@ const VerifyAadhaarWithBio: FC<VerifyAadhaarWithBioProps> = ({
       aadhaar: form.getValues("_aadhaar"),
       fingerprint_pid: values.fingerprint_pid,
       mobile: values.mobile,
-      transaction_id: memory?.transactionId,
+      transaction_id: memory?.transactionId || undefined,
     });
   }
 
