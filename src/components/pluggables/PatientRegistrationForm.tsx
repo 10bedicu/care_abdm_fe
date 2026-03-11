@@ -1,6 +1,7 @@
 import { FC, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import { I18NNAMESPACE } from "@/lib/constants";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LinkAbhaNumber } from "../LinkAbhaNumber";
@@ -9,6 +10,7 @@ import { UseFormReturn } from "react-hook-form";
 import { apis } from "@/apis";
 import { enforceAbhaNumberLinking } from "@/config";
 import { toast } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 type PatientRegistrationFormProps = {
   form: UseFormReturn;
@@ -22,6 +24,7 @@ const PatientRegistrationForm: FC<PatientRegistrationFormProps> = ({
   patientId,
 }) => {
   const queryClient = useQueryClient();
+  const { t } = useTranslation(I18NNAMESPACE);
 
   const { data: abhaNumber, refetch } = useQuery({
     queryKey: ["abhaNumber", patientId],
@@ -41,12 +44,12 @@ const PatientRegistrationForm: FC<PatientRegistrationFormProps> = ({
     mutationFn: apis.healthId.linkAbhaNumberAndPatient,
     onSuccess: (data) => {
       if (data) {
-        toast.success(data.detail);
+        toast.success(data.detail || t("abha_number_linked_successfully"));
         refetch();
       }
     },
     onError: (error) => {
-      toast.error(error.message);
+      toast.error(error.message || t("error_linking_abha_number"));
     },
   });
 

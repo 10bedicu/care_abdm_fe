@@ -1,10 +1,12 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 import { FC } from "react";
+import { I18NNAMESPACE } from "@/lib/constants";
 import { LinkAbhaNumber } from "@/components/LinkAbhaNumber";
 import { Patient } from "@/types/patient";
 import { apis } from "@/apis";
 import { toast } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 type PatientHomeActionsProps = {
   patient: Patient;
@@ -17,6 +19,7 @@ const PatientHomeActions: FC<PatientHomeActionsProps> = ({
   facilityId,
   className,
 }) => {
+  const { t } = useTranslation(I18NNAMESPACE);
   const { data: abhaNumber, refetch } = useQuery({
     queryKey: ["abhaNumber", patient.id],
     queryFn: () => apis.abhaNumber.get(patient.id),
@@ -27,12 +30,12 @@ const PatientHomeActions: FC<PatientHomeActionsProps> = ({
     mutationFn: apis.healthId.linkAbhaNumberAndPatient,
     onSuccess: (data) => {
       if (data) {
-        toast.success(data.detail);
+        toast.success(data.detail || t("abha_number_linked_successfully"));
         refetch();
       }
     },
     onError: (error) => {
-      toast.error(error.message);
+      toast.error(error.message || t("error_linking_abha_number"));
     },
   });
 

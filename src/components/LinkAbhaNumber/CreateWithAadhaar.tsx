@@ -186,7 +186,7 @@ const EnterAadhaar: FC<EnterAadhaarProps> = ({ setMemory, goTo }) => {
     mutationFn: apis.healthId.abhaCreateSendAadhaarOtp,
     onSuccess: (data) => {
       if (data) {
-        toast.success(data.detail);
+        toast.success(data.detail || t("otp_sent_successfully"));
         setMemory((prev) => ({
           ...prev,
           transactionId: data.transaction_id,
@@ -405,7 +405,7 @@ const VerifyAadhaarWithOtp: FC<VerifyAadhaarWithOtpProps> = ({
     mutationFn: apis.healthId.abhaCreateVerifyAadhaarOtp,
     onSuccess: (data) => {
       if (data) {
-        toast.success(data.detail);
+        toast.success(data.detail || t("otp_verified_successfully"));
         setMemory((prev) => ({
           ...prev,
           transactionId: data.transaction_id,
@@ -421,7 +421,7 @@ const VerifyAadhaarWithOtp: FC<VerifyAadhaarWithOtpProps> = ({
     mutationFn: apis.healthId.abhaCreateSendAadhaarOtp,
     onSuccess: (data) => {
       if (data) {
-        toast.success(data.detail);
+        toast.success(data.detail || t("otp_resend_successfully"));
         form.setValue("otp", "");
         setMemory((prev) => ({
           ...prev,
@@ -620,7 +620,7 @@ const VerifyAadhaarWithDemographics: FC<VerifyAadhaarWithDemographicsProps> = ({
       form.setError("_aadhaar", {
         message: error.message,
       });
-      toast.error(error.message);
+      toast.error(error.message || t("error_verifying_aadhaar_demographics"));
     },
   });
 
@@ -923,7 +923,7 @@ const VerifyAadhaarWithFace: FC<VerifyAadhaarWithFaceProps> = ({
       }
     },
     onError: (error) => {
-      toast.error(error.message);
+      toast.error(error.message || t("error_verifying_aadhaar_face"));
       setMemory((prev) => ({
         ...prev,
         transactionId: "",
@@ -963,7 +963,7 @@ const VerifyAadhaarWithFace: FC<VerifyAadhaarWithFaceProps> = ({
         ...prev,
         error: error.message,
       }));
-      toast.error(error.message);
+      toast.error(error.message || t("error_capturing_pid_via_face"));
     },
   });
 
@@ -990,6 +990,7 @@ const VerifyAadhaarWithFace: FC<VerifyAadhaarWithFaceProps> = ({
     }
   }, [isPolling]);
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   function onSubmit(_values: VerifyAadhaarWithFaceFormValues) {
     authInitViaFaceMutation.mutate();
   }
@@ -1423,7 +1424,7 @@ const LinkMobile: FC<LinkMobileProps> = ({ memory, setMemory, goTo }) => {
     mutationFn: apis.healthId.abhaCreateLinkMobileNumber,
     onSuccess: (data) => {
       if (data) {
-        toast.success(data.detail);
+        toast.success(data.detail || t("otp_sent_successfully"));
         setMemory((prev) => ({
           ...prev,
           transactionId: data.transaction_id,
@@ -1511,7 +1512,7 @@ const VerifyMobile: FC<VerifyMobileProps> = ({ memory, setMemory, goTo }) => {
     mutationFn: apis.healthId.abhaCreateVerifyMobileNumber,
     onSuccess: (data) => {
       if (data) {
-        toast.success(data.detail);
+        toast.success(data.detail || t("otp_verified_successfully"));
         setMemory((prev) => ({
           ...prev,
           transactionId: data.transaction_id,
@@ -1525,7 +1526,7 @@ const VerifyMobile: FC<VerifyMobileProps> = ({ memory, setMemory, goTo }) => {
     mutationFn: apis.healthId.abhaCreateLinkMobileNumber,
     onSuccess: (data) => {
       if (data) {
-        toast.success(data.detail);
+        toast.success(data.detail || t("otp_resend_successfully"));
         form.setValue("otp", "");
         setMemory((prev) => ({
           ...prev,
@@ -1714,7 +1715,7 @@ export const ChooseAbhaAddress: FC<ChooseAbhaAddressProps> = ({
           transactionId: data.transaction_id,
           abhaNumber: data.abha_number,
         }));
-        toast.success("ABHA Address created successfully");
+        toast.success(t("abha_address_created_successfully"));
         goTo("show-abha-profile");
       }
     },
