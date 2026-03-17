@@ -8,7 +8,6 @@ import {
 } from "@/components/ui/dialog";
 import { FC, useMemo, useState } from "react";
 
-import { ArrowRightIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Patient } from "@/types/patient";
@@ -124,14 +123,14 @@ const PatientCard: FC<{ patient: Patient }> = ({ patient }) => {
   return (
     <div
       onClick={() => {
-        navigate("patients/verify", {
+        navigate("patients/home", {
           query: {
             phone_number: patient.phone_number,
             year_of_birth: yearOfBirth,
             partial_id: patient.partial_id || patient.id.slice(0, 5),
           },
         });
-      }} 
+      }}
       className="border rounded-md p-4 cursor-pointer"
     >
       <div className="flex items-center justify-between">
