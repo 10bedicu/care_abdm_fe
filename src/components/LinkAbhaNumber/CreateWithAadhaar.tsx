@@ -182,6 +182,13 @@ const EnterAadhaar: FC<EnterAadhaarProps> = ({ setMemory, goTo }) => {
     },
   });
 
+  const handleCheckAllDisclaimers = () => {
+    Array.from({ length: 6 }).forEach((_, index) => {
+      const fieldName = `disclaimer_${index + 1}` as keyof EnterAadhaarFormValues;
+      form.setValue(fieldName, true, { shouldValidate: true });
+    });
+  };
+
   const sendAadhaarOtpMutation = useMutation({
     mutationFn: apis.healthId.abhaCreateSendAadhaarOtp,
     onSuccess: (data) => {
@@ -293,6 +300,20 @@ const EnterAadhaar: FC<EnterAadhaarProps> = ({ setMemory, goTo }) => {
             )}
           />
         ))}
+
+        <div className="flex justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleCheckAllDisclaimers();
+            }}
+          >
+            Check all terms
+          </Button>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           <Button
             type="submit"

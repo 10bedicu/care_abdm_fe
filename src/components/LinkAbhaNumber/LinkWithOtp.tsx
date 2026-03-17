@@ -134,6 +134,13 @@ const EnterId: FC<EnterIdProps> = ({ setMemory, goTo }) => {
     },
   });
 
+  const handleCheckAllDisclaimers = () => {
+    Array.from({ length: 5 }).forEach((_, index) => {
+      const fieldName = `disclaimer_${index + 1}` as keyof EnterIdFormValues;
+      form.setValue(fieldName, true, { shouldValidate: true });
+    });
+  };
+
   const checkAuthMethodsMutation = useMutation({
     mutationFn: apis.healthId.abhaLoginCheckAuthMethods,
     onSuccess: (data) => {
@@ -248,6 +255,20 @@ const EnterId: FC<EnterIdProps> = ({ setMemory, goTo }) => {
             )}
           />
         ))}
+
+        <div className="flex justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleCheckAllDisclaimers();
+            }}
+          >
+            Check all terms
+          </Button>
+        </div>
 
         <Popover
           open={showAuthMethods}
