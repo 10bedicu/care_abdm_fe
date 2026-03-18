@@ -33,10 +33,10 @@ import { Input } from "@/components/ui/input";
 import { apis } from "@/apis";
 import { toast } from "@/lib/utils";
 import { useForm } from "react-hook-form";
+import { useLinkAbhaNumberContext } from ".";
 import { useMutation } from "@tanstack/react-query";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useLinkAbhaNumberContext } from ".";
 
 type LinkWithOtpProps = {
   onSuccess: (abhaNumber: AbhaNumber) => void;
@@ -113,7 +113,7 @@ const enterIdFormSchema = z.object({
 
 type EnterIdFormValues = z.infer<typeof enterIdFormSchema>;
 
-const EnterId: FC<EnterIdProps> = ({ memory, setMemory, goTo }) => {
+const EnterId: FC<EnterIdProps> = ({ setMemory, goTo }) => {
   const { t } = useTranslation(I18NNAMESPACE);
   const { currentUser } = useLinkAbhaNumberContext();
 
@@ -133,6 +133,13 @@ const EnterId: FC<EnterIdProps> = ({ memory, setMemory, goTo }) => {
       disclaimer_5: false,
     },
   });
+
+  const handleCheckAllDisclaimers = () => {
+    Array.from({ length: 5 }).forEach((_, index) => {
+      const fieldName = `disclaimer_${index + 1}` as keyof EnterIdFormValues;
+      form.setValue(fieldName, true, { shouldValidate: true });
+    });
+  };
 
   const checkAuthMethodsMutation = useMutation({
     mutationFn: apis.healthId.abhaLoginCheckAuthMethods,
@@ -170,7 +177,7 @@ const EnterId: FC<EnterIdProps> = ({ memory, setMemory, goTo }) => {
     mutationFn: apis.healthId.abhaLoginSendOtp,
     onSuccess: (data) => {
       if (data) {
-        toast.success(data.detail);
+        toast.success(data.detail || t("otp_sent_successfully"));
         setMemory((prev) => ({
           ...prev,
           transactionId: data.transaction_id,
@@ -248,6 +255,20 @@ const EnterId: FC<EnterIdProps> = ({ memory, setMemory, goTo }) => {
             )}
           />
         ))}
+
+        <div className="flex justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleCheckAllDisclaimers();
+            }}
+          >
+            Check all terms
+          </Button>
+        </div>
 
         <Popover
           open={showAuthMethods}
@@ -339,7 +360,7 @@ const VerifyId: FC<VerifyIdProps> = ({ memory, setMemory, onSuccess }) => {
     mutationFn: apis.healthId.abhaLoginVerifyOtp,
     onSuccess: (data) => {
       if (data) {
-        toast.success(t("verify_otp_success"));
+        toast.success(t("otp_verified_successfully"));
         onSuccess(data.abha_number);
       }
     },
@@ -349,7 +370,7 @@ const VerifyId: FC<VerifyIdProps> = ({ memory, setMemory, onSuccess }) => {
     mutationFn: apis.healthId.abhaLoginSendOtp,
     onSuccess: (data) => {
       if (data) {
-        toast.success(data.detail);
+        toast.success(data.detail || t("otp_resend_successfully"));
         form.setValue("otp", "");
         setMemory((prev) => ({
           ...prev,

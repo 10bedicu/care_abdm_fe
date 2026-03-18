@@ -182,11 +182,18 @@ const EnterAadhaar: FC<EnterAadhaarProps> = ({ setMemory, goTo }) => {
     },
   });
 
+  const handleCheckAllDisclaimers = () => {
+    Array.from({ length: 6 }).forEach((_, index) => {
+      const fieldName = `disclaimer_${index + 1}` as keyof EnterAadhaarFormValues;
+      form.setValue(fieldName, true, { shouldValidate: true });
+    });
+  };
+
   const sendAadhaarOtpMutation = useMutation({
     mutationFn: apis.healthId.abhaCreateSendAadhaarOtp,
     onSuccess: (data) => {
       if (data) {
-        toast.success(data.detail);
+        toast.success(data.detail || t("otp_sent_successfully"));
         setMemory((prev) => ({
           ...prev,
           transactionId: data.transaction_id,
@@ -293,6 +300,20 @@ const EnterAadhaar: FC<EnterAadhaarProps> = ({ setMemory, goTo }) => {
             )}
           />
         ))}
+
+        <div className="flex justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleCheckAllDisclaimers();
+            }}
+          >
+            Check all terms
+          </Button>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           <Button
             type="submit"
@@ -405,7 +426,7 @@ const VerifyAadhaarWithOtp: FC<VerifyAadhaarWithOtpProps> = ({
     mutationFn: apis.healthId.abhaCreateVerifyAadhaarOtp,
     onSuccess: (data) => {
       if (data) {
-        toast.success(data.detail);
+        toast.success(data.detail || t("otp_verified_successfully"));
         setMemory((prev) => ({
           ...prev,
           transactionId: data.transaction_id,
@@ -421,7 +442,7 @@ const VerifyAadhaarWithOtp: FC<VerifyAadhaarWithOtpProps> = ({
     mutationFn: apis.healthId.abhaCreateSendAadhaarOtp,
     onSuccess: (data) => {
       if (data) {
-        toast.success(data.detail);
+        toast.success(data.detail || t("otp_resend_successfully"));
         form.setValue("otp", "");
         setMemory((prev) => ({
           ...prev,
@@ -620,7 +641,7 @@ const VerifyAadhaarWithDemographics: FC<VerifyAadhaarWithDemographicsProps> = ({
       form.setError("_aadhaar", {
         message: error.message,
       });
-      toast.error(error.message);
+      toast.error(error.message || t("error_verifying_aadhaar_demographics"));
     },
   });
 
@@ -923,7 +944,7 @@ const VerifyAadhaarWithFace: FC<VerifyAadhaarWithFaceProps> = ({
       }
     },
     onError: (error) => {
-      toast.error(error.message);
+      toast.error(error.message || t("error_verifying_aadhaar_face"));
       setMemory((prev) => ({
         ...prev,
         transactionId: "",
@@ -963,7 +984,7 @@ const VerifyAadhaarWithFace: FC<VerifyAadhaarWithFaceProps> = ({
         ...prev,
         error: error.message,
       }));
-      toast.error(error.message);
+      toast.error(error.message || t("error_capturing_pid_via_face"));
     },
   });
 
@@ -990,6 +1011,7 @@ const VerifyAadhaarWithFace: FC<VerifyAadhaarWithFaceProps> = ({
     }
   }, [isPolling]);
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   function onSubmit(_values: VerifyAadhaarWithFaceFormValues) {
     authInitViaFaceMutation.mutate();
   }
@@ -1423,7 +1445,7 @@ const LinkMobile: FC<LinkMobileProps> = ({ memory, setMemory, goTo }) => {
     mutationFn: apis.healthId.abhaCreateLinkMobileNumber,
     onSuccess: (data) => {
       if (data) {
-        toast.success(data.detail);
+        toast.success(data.detail || t("otp_sent_successfully"));
         setMemory((prev) => ({
           ...prev,
           transactionId: data.transaction_id,
@@ -1511,7 +1533,7 @@ const VerifyMobile: FC<VerifyMobileProps> = ({ memory, setMemory, goTo }) => {
     mutationFn: apis.healthId.abhaCreateVerifyMobileNumber,
     onSuccess: (data) => {
       if (data) {
-        toast.success(data.detail);
+        toast.success(data.detail || t("otp_verified_successfully"));
         setMemory((prev) => ({
           ...prev,
           transactionId: data.transaction_id,
@@ -1525,7 +1547,7 @@ const VerifyMobile: FC<VerifyMobileProps> = ({ memory, setMemory, goTo }) => {
     mutationFn: apis.healthId.abhaCreateLinkMobileNumber,
     onSuccess: (data) => {
       if (data) {
-        toast.success(data.detail);
+        toast.success(data.detail || t("otp_resend_successfully"));
         form.setValue("otp", "");
         setMemory((prev) => ({
           ...prev,
@@ -1714,7 +1736,7 @@ export const ChooseAbhaAddress: FC<ChooseAbhaAddressProps> = ({
           transactionId: data.transaction_id,
           abhaNumber: data.abha_number,
         }));
-        toast.success("ABHA Address created successfully");
+        toast.success(t("abha_address_created_successfully"));
         goTo("show-abha-profile");
       }
     },
