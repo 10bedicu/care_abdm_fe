@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import CreateConsentRequestForm from "../CreateConsentRequestForm";
 import { Encounter } from "@/types/encounter";
 import { I18NNAMESPACE } from "@/lib/constants";
+import { WithMeta } from "@/types/meta";
 import { apis } from "@/apis";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
@@ -22,7 +23,7 @@ type EncounterActionsProps = {
   className?: string;
 };
 
-const EncounterActions: FC<EncounterActionsProps> = ({
+const EncounterActions: FC<WithMeta<EncounterActionsProps>> = ({
   encounter,
   className,
 }) => {

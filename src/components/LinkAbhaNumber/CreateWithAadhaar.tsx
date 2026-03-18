@@ -40,7 +40,6 @@ import { QRCodeSVG } from "qrcode.react";
 import { Textarea } from "@/components/ui/textarea";
 import { apis } from "@/apis";
 import { cn } from "@/lib/utils";
-import { faceAuthUrl } from "@/config";
 import { toast } from "@/lib/utils";
 import { useForm } from "react-hook-form";
 import { useLinkAbhaNumberContext } from ".";
@@ -167,6 +166,8 @@ type EnterAadhaarFormValues = z.infer<typeof enterAadhaarFormSchema>;
 const EnterAadhaar: FC<EnterAadhaarProps> = ({ setMemory, goTo }) => {
   const { t } = useTranslation(I18NNAMESPACE);
   const { healthFacility, currentUser } = useLinkAbhaNumberContext();
+
+  const faceAuthUrl = window.__CARE_PLUGIN_RUNTIME__?.meta?.care_abdm_fe?.config?.faceAuthUrl;
 
   const form = useForm<EnterAadhaarFormValues>({
     resolver: zodResolver(enterAadhaarFormSchema),
@@ -363,7 +364,7 @@ const EnterAadhaar: FC<EnterAadhaarProps> = ({ setMemory, goTo }) => {
           >
             {t("verify_with_bio")}
           </Button>
-          <Button
+          {faceAuthUrl && <Button
             type="button"
             variant="default"
             disabled={!form.formState.isValid}
@@ -379,7 +380,7 @@ const EnterAadhaar: FC<EnterAadhaarProps> = ({ setMemory, goTo }) => {
             className="w-full"
           >
             {t("verify_with_face")}
-          </Button>
+          </Button>}
         </div>
       </form>
     </Form>
@@ -915,6 +916,7 @@ const VerifyAadhaarWithFace: FC<VerifyAadhaarWithFaceProps> = ({
 }) => {
   const { t } = useTranslation(I18NNAMESPACE);
   const [isPolling, setIsPolling] = useState(false);
+  const faceAuthUrl = window?.__CARE_PLUGIN_RUNTIME__?.meta?.care_abdm_fe?.config?.faceAuthUrl;
 
   const form = useForm<VerifyAadhaarWithFaceFormValues>({
     resolver: zodResolver(verifyAadhaarWithFaceFormSchema),

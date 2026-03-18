@@ -13,7 +13,6 @@ import { Button } from "./ui/button";
 import { I18NNAMESPACE } from "@/lib/constants";
 import { Input } from "@/components/ui/input";
 import { QRCodeSVG } from "qrcode.react";
-import { scanAndShareUrl } from "@/config";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
@@ -21,6 +20,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 
 type GenerateScanAndShareQRProps = {
   healthFacilityId: string;
+  scanAndShareUrl?: string;
 };
 
 const scanAndShareQrFormSchema = z.object({
@@ -29,6 +29,7 @@ const scanAndShareQrFormSchema = z.object({
 
 export const GenerateScanAndShareQR: FC<GenerateScanAndShareQRProps> = ({
   healthFacilityId,
+  scanAndShareUrl,
 }) => {
   const { t } = useTranslation(I18NNAMESPACE);
 
@@ -84,7 +85,7 @@ export const GenerateScanAndShareQR: FC<GenerateScanAndShareQRProps> = ({
     document.body.removeChild(downloadLink);
   };
 
-  function onSubmit(_values: z.infer<typeof scanAndShareQrFormSchema>) {
+  function onSubmit() {
     downloadQR();
   }
 
@@ -135,7 +136,7 @@ export const GenerateScanAndShareQR: FC<GenerateScanAndShareQRProps> = ({
           />
         </form>
 
-        {!!scanAndShareQrForm.watch("counterName") && (
+        {!!scanAndShareQrForm.watch("counterName") && scanAndShareQrValue && (
           <div className="grid gap-3 items-center justify-center w-full">
             <QRCodeSVG
               value={scanAndShareQrValue}

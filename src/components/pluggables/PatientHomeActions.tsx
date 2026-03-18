@@ -4,6 +4,7 @@ import { FC } from "react";
 import { I18NNAMESPACE } from "@/lib/constants";
 import { LinkAbhaNumber } from "@/components/LinkAbhaNumber";
 import { Patient } from "@/types/patient";
+import { WithMeta } from "@/types/meta";
 import { apis } from "@/apis";
 import { toast } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
@@ -14,7 +15,7 @@ type PatientHomeActionsProps = {
   className?: string;
 };
 
-const PatientHomeActions: FC<PatientHomeActionsProps> = ({
+const PatientHomeActions: FC<WithMeta<PatientHomeActionsProps>> = ({
   patient,
   facilityId,
   className,

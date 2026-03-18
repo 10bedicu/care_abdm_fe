@@ -1,9 +1,4 @@
 import { FC, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
-import { Facility } from "@/types/facility";
-import { SettingsIcon } from "lucide-react";
-import { ConfigureHealthFacilityForm } from "../ConfigureHealthFacilityForm";
 import {
   Sheet,
   SheetContent,
@@ -12,15 +7,25 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { useQueryClient } from "@tanstack/react-query";
+
+import { Button } from "@/components/ui/button";
+import { ConfigureHealthFacilityForm } from "../ConfigureHealthFacilityForm";
+import { Facility } from "@/types/facility";
 import { I18NNAMESPACE } from "@/lib/constants";
+import { SettingsIcon } from "lucide-react";
+import { WithMeta } from "@/types/meta";
+import { useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 
 type FacilityHomeActionsProps = {
   facility: Facility;
   className?: string;
 };
 
-const FacilityHomeActions: FC<FacilityHomeActionsProps> = ({ facility }) => {
+const FacilityHomeActions: FC<WithMeta<FacilityHomeActionsProps>> = ({
+  facility,
+  __meta,
+}) => {
   const { t } = useTranslation(I18NNAMESPACE);
   const queryClient = useQueryClient();
 
@@ -59,6 +64,7 @@ const FacilityHomeActions: FC<FacilityHomeActionsProps> = ({ facility }) => {
                 });
                 setOpen(false);
               }}
+              meta={__meta}
             />
           </div>
         </SheetContent>
