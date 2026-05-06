@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { FC } from "react";
 import { HashIcon } from "lucide-react";
 import TokenSearchDialog from "@/components/TokenSearchDialog";
+import { WithMeta } from "@/types/meta";
 import { apis } from "@/apis";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
@@ -11,7 +12,7 @@ type PatientSearchActionsProps = {
   className?: string;
 };
 
-const PatientSearchActions: FC<PatientSearchActionsProps> = ({
+const PatientSearchActions: FC<WithMeta<PatientSearchActionsProps>> = ({
   facilityId,
   className,
 }) => {

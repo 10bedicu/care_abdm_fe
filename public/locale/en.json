@@ -145,5 +145,13 @@
   "verify_bio": "Verify Biometrics",
   "capture_fingerprint": "Capture Fingerprint",
   "initiate_face_auth": "Initiate Face Authentication",
-  "retry_face_auth": "Retry Face Authentication"
+  "retry_face_auth": "Retry Face Authentication",
+  "error_verifying_aadhaar_demographics": "Error verifying Aadhaar demographics.",
+  "error_verifying_aadhaar_face": "Error verifying Aadhaar face.",
+  "error_capturing_pid_via_face": "Error capturing PID via face.",
+  "error_linking_abha_number": "Error linking ABHA number.",
+  "otp_sent_successfully": "OTP has been sent successfully.",
+  "otp_verified_successfully": "OTP has been verified successfully.",
+  "otp_resend_successfully": "OTP has been resend successfully.",
+  "abha_address_created_successfully": "ABHA Address has been created successfully."
 }
