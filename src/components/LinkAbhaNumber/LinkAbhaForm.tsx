@@ -16,12 +16,21 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { I18NNAMESPACE, MAX_OTP_RESEND_COUNT } from "@/lib/constants";
+import {
+  I18NNAMESPACE,
+  MAX_OTP_RESEND_COUNT,
+  SUPPORTED_AUTH_METHODS,
+} from "@/lib/constants";
 import {
   InputOTP,
   InputOTPGroup,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -46,29 +55,57 @@ import { useLinkAbhaNumberContext } from ".";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-type CreateWithAadhaarProps = {
+type LinkAbhaFormProps = {
   onSuccess: (abhaNumber: AbhaNumber) => void;
 };
 
+type IdType = "aadhaar" | "mobile" | "abha-number" | "abha-address";
+
 type FormMemory = {
+  // Shared
+  transactionId: string;
+  abhaNumber?: AbhaNumber;
+
+  // Create flow fields
   aadhaarNumber: string;
   mobileNumber: string;
   patientName: string;
-
-  transactionId: string;
-  abhaNumber?: AbhaNumber;
   retryCount: number;
   error?: string;
+
+  // Link flow fields
+  id: string;
+  idType: IdType;
+  otpSystem: "aadhaar" | "abdm";
 };
 
-export const CreateWithAadhaar: FC<CreateWithAadhaarProps> = ({
-  onSuccess,
-}) => {
+const normalizeId = (id: string) =>
+  (id ?? "").trim().replace(/-/g, "").replace(/ /g, "");
+
+const getIdType = (id: string): IdType => {
+  const isNumeric = id.length > 0 && !isNaN(Number(id));
+
+  if (isNumeric && (id.length === 12 || id.length === 16)) {
+    return "aadhaar";
+  } else if (isNumeric && id.length === 10) {
+    return "mobile";
+  } else if (isNumeric && id.length === 14) {
+    return "abha-number";
+  } else {
+    return "abha-address";
+  }
+};
+
+export const LinkAbhaForm: FC<LinkAbhaFormProps> = ({ onSuccess }) => {
   const { currentStep } = useMultiStepForm<FormMemory>(
     [
       {
-        id: "enter-aadhaar",
-        element: <EnterAadhaar {...({} as EnterAadhaarProps)} />,
+        id: "enter-identifier",
+        element: <EnterIdentifier {...({} as EnterIdentifierProps)} />,
+      },
+      {
+        id: "verify-id",
+        element: <VerifyId {...({ onSuccess } as VerifyIdProps)} />,
       },
       {
         id: "verify-aadhaar-with-otp",
@@ -118,61 +155,98 @@ export const CreateWithAadhaar: FC<CreateWithAadhaarProps> = ({
       },
     ],
     {
+      transactionId: "",
       aadhaarNumber: "",
       mobileNumber: "",
       patientName: "",
-
-      transactionId: "",
       retryCount: 0,
+      id: "",
+      idType: "aadhaar",
+      otpSystem: "aadhaar",
     }
   );
 
   return <div>{currentStep}</div>;
 };
 
-type EnterAadhaarProps = InjectedStepProps<FormMemory>;
+type EnterIdentifierProps = InjectedStepProps<FormMemory>;
 
-const enterAadhaarFormSchema = z.object({
-  aadhaar: z
-    .string()
-    .refine((value) => value.length === 12 || value.length === 16, {
-      message: "Aadhaar number must be 12 or 16 digits",
-    }),
-  name: z.string().min(1, {
-    message: "Name is required",
-  }),
-  disclaimer_1: z.boolean().refine((value) => value === true, {
-    message: "Please read and accept this policy",
-  }),
-  disclaimer_2: z.boolean().refine((value) => value === true, {
-    message: "Please read and accept this policy",
-  }),
-  disclaimer_3: z.boolean().refine((value) => value === true, {
-    message: "Please read and accept this policy",
-  }),
-  disclaimer_4: z.boolean().refine((value) => value === true, {
-    message: "Please read and accept this policy",
-  }),
-  disclaimer_5: z.boolean().refine((value) => value === true, {
-    message: "Please read and accept this policy",
-  }),
-  disclaimer_6: z.boolean().refine((value) => value === true, {
-    message: "Please read and accept this policy",
-  }),
-});
+const enterIdentifierFormSchema = z
+  .object({
+    id: z.string().min(4, { message: "Enter a valid ID" }),
+    name: z.string().optional(),
+    disclaimer_1: z.boolean(),
+    disclaimer_2: z.boolean(),
+    disclaimer_3: z.boolean(),
+    disclaimer_4: z.boolean(),
+    disclaimer_5: z.boolean(),
+    disclaimer_6: z.boolean(),
+  })
+  .superRefine((data, ctx) => {
+    const id = normalizeId(data.id);
+    const idType = getIdType(id);
+    const isCreateFlow = idType === "aadhaar";
 
-type EnterAadhaarFormValues = z.infer<typeof enterAadhaarFormSchema>;
+    if (isCreateFlow) {
+      if (!(id.length === 12 || id.length === 16)) {
+        ctx.addIssue({
+          path: ["id"],
+          code: z.ZodIssueCode.custom,
+          message: "Aadhaar number must be 12 or 16 digits",
+        });
+      }
 
-const EnterAadhaar: FC<EnterAadhaarProps> = ({ setMemory, goTo }) => {
+      if (!data.name || data.name.trim().length === 0) {
+        ctx.addIssue({
+          path: ["name"],
+          code: z.ZodIssueCode.custom,
+          message: "Name is required",
+        });
+      }
+
+      for (let i = 1; i <= 6; i++) {
+        const key = `disclaimer_${i}` as keyof typeof data;
+        if (data[key] !== true) {
+          ctx.addIssue({
+            path: [key],
+            code: z.ZodIssueCode.custom,
+            message: "Please read and accept this policy",
+          });
+        }
+      }
+    } else {
+      for (let i = 2; i <= 6; i++) {
+        const key = `disclaimer_${i}` as keyof typeof data;
+        if (data[key] !== true) {
+          ctx.addIssue({
+            path: [key],
+            code: z.ZodIssueCode.custom,
+            message: "Please read and accept this policy",
+          });
+        }
+      }
+    }
+  });
+
+type EnterIdentifierFormValues = z.infer<typeof enterIdentifierFormSchema>;
+
+const EnterIdentifier: FC<EnterIdentifierProps> = ({ setMemory, goTo }) => {
   const { t } = useTranslation(I18NNAMESPACE);
   const { healthFacility, currentUser } = useLinkAbhaNumberContext();
 
-  const faceAuthUrl = window.__CARE_PLUGIN_RUNTIME__?.meta?.care_abdm_fe?.config?.faceAuthUrl;
+  const faceAuthUrl =
+    window.__CARE_PLUGIN_RUNTIME__?.meta?.care_abdm_fe?.config?.faceAuthUrl;
 
-  const form = useForm<EnterAadhaarFormValues>({
-    resolver: zodResolver(enterAadhaarFormSchema),
+  const [showAuthMethods, setShowAuthMethods] = useState(false);
+  const [authMethods, setAuthMethods] = useState<
+    (typeof SUPPORTED_AUTH_METHODS)[number][]
+  >([]);
+
+  const form = useForm<EnterIdentifierFormValues>({
+    resolver: zodResolver(enterIdentifierFormSchema),
+    mode: "onChange",
     defaultValues: {
-      aadhaar: "",
+      id: "",
       name: "",
       disclaimer_1: false,
       disclaimer_2: false,
@@ -183,9 +257,17 @@ const EnterAadhaar: FC<EnterAadhaarProps> = ({ setMemory, goTo }) => {
     },
   });
 
+  const idWatch = form.watch("id");
+  const normalizedId = normalizeId(idWatch || "");
+  const idType = getIdType(normalizedId);
+  const isCreateFlow = idType === "aadhaar";
+
   const handleCheckAllDisclaimers = () => {
-    Array.from({ length: 6 }).forEach((_, index) => {
-      const fieldName = `disclaimer_${index + 1}` as keyof EnterAadhaarFormValues;
+    const count = isCreateFlow ? 6 : 5;
+    const start = isCreateFlow ? 1 : 2;
+    Array.from({ length: count }).forEach((_, index) => {
+      const fieldName =
+        `disclaimer_${index + start}` as keyof EnterIdentifierFormValues;
       form.setValue(fieldName, true, { shouldValidate: true });
     });
   };
@@ -198,17 +280,64 @@ const EnterAadhaar: FC<EnterAadhaarProps> = ({ setMemory, goTo }) => {
         setMemory((prev) => ({
           ...prev,
           transactionId: data.transaction_id,
-          aadhaarNumber: form.getValues("aadhaar"),
+          aadhaarNumber: normalizedId,
         }));
         goTo("verify-aadhaar-with-otp");
       }
     },
   });
 
-  function onSubmit(values: EnterAadhaarFormValues) {
+  const checkAuthMethodsMutation = useMutation({
+    mutationFn: apis.healthId.abhaLoginCheckAuthMethods,
+    onSuccess: (data) => {
+      if (data) {
+        const methods = data.auth_methods.filter((method: string) =>
+          SUPPORTED_AUTH_METHODS.find((supported) => supported === method)
+        );
+
+        if (methods.length === 0) {
+          toast.warning(t("get_auth_mode_error"));
+        }
+
+        setAuthMethods(
+          methods as (typeof SUPPORTED_AUTH_METHODS)[number][]
+        );
+      }
+    },
+  });
+
+  const sendOtpMutation = useMutation({
+    mutationFn: apis.healthId.abhaLoginSendOtp,
+    onSuccess: (data) => {
+      if (data) {
+        toast.success(data.detail || t("otp_sent_successfully"));
+        setMemory((prev) => ({
+          ...prev,
+          transactionId: data.transaction_id,
+        }));
+        goTo("verify-id");
+      }
+    },
+  });
+
+  function onSubmitCreate(values: EnterIdentifierFormValues) {
     sendAadhaarOtpMutation.mutate({
-      aadhaar: values.aadhaar,
+      aadhaar: normalizeId(values.id),
     });
+  }
+
+  async function onSubmitLink() {
+    if (idType === "aadhaar") {
+      setAuthMethods(["AADHAAR_OTP"]);
+    } else if (idType === "mobile") {
+      setAuthMethods(["MOBILE_OTP"]);
+    } else {
+      await checkAuthMethodsMutation.mutateAsync({
+        abha_address: normalizedId,
+      });
+    }
+
+    setShowAuthMethods(true);
   }
 
   const currentUserName = useMemo(
@@ -226,40 +355,43 @@ const EnterAadhaar: FC<EnterAadhaarProps> = ({ setMemory, goTo }) => {
     [currentUser]
   );
 
+  const disclaimerIndices = isCreateFlow ? [1, 2, 3, 4, 5, 6] : [2, 3, 4, 5, 6];
+
   return (
     <Form {...form}>
       <form
         onSubmit={(e) => {
           e.stopPropagation();
-          form.handleSubmit(onSubmit)(e);
+          form.handleSubmit(onSubmitCreate)(e);
         }}
         className="mt-4 space-y-4"
       >
         <FormField
           control={form.control}
-          name="aadhaar"
+          name="id"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Aadhaar Number / Virtual ID</FormLabel>
+              <FormLabel>{t("any_id")}</FormLabel>
               <FormControl>
-                <Input
-                  placeholder="Enter 12 digital Aadhaar number OR 16 digit virtual ID"
-                  {...field}
-                />
+                <Input placeholder={t("enter_any_id")} {...field} />
               </FormControl>
               <FormDescription>
-                Aadhaar number will not be stored by CARE.
+                {isCreateFlow
+                  ? "Aadhaar number will not be stored by CARE."
+                  : t("any_id_description")}
               </FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        {Array.from({ length: 6 }).map((_, index) => (
+        {disclaimerIndices.map((disclaimerIndex) => (
           <FormField
-            key={`disclaimer_${index + 1}`}
+            key={`disclaimer_${disclaimerIndex}`}
             control={form.control}
-            name={`disclaimer_${index + 1}` as keyof EnterAadhaarFormValues}
+            name={
+              `disclaimer_${disclaimerIndex}` as keyof EnterIdentifierFormValues
+            }
             render={({ field }) => (
               <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                 <FormControl>
@@ -272,18 +404,18 @@ const EnterAadhaar: FC<EnterAadhaarProps> = ({ setMemory, goTo }) => {
                   <FormLabel className="text-sm font-normal">
                     <Trans
                       t={t}
-                      i18nKey={`abha__disclaimer_${index + 1}`}
+                      i18nKey={`abha__disclaimer_${disclaimerIndex}`}
                       values={{ user: currentUserName }}
                       components={{
                         input: (
                           <FormField
                             control={form.control}
                             name="name"
-                            render={({ field }) => (
+                            render={({ field: nameField }) => (
                               <FormItem className="inline-block w-auto ml-1">
                                 <FormControl>
                                   <Input
-                                    {...field}
+                                    {...nameField}
                                     placeholder="Enter Beneficiary Name"
                                   />
                                 </FormControl>
@@ -315,20 +447,40 @@ const EnterAadhaar: FC<EnterAadhaarProps> = ({ setMemory, goTo }) => {
             Check all terms
           </Button>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-          <Button
-            type="submit"
-            variant="default"
-            loading={sendAadhaarOtpMutation.isPending}
-            disabled={!form.formState.isValid}
-            className={cn(
-              "w-full",
-              !healthFacility?.benefit_name && "col-span-2"
+
+        {isCreateFlow ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <Button
+              type="submit"
+              variant="default"
+              loading={sendAadhaarOtpMutation.isPending}
+              disabled={!form.formState.isValid}
+              className={cn(
+                "w-full",
+                !healthFacility?.benefit_name && "col-span-2"
+              )}
+            >
+              {t("verify_with_otp")}
+            </Button>
+            {healthFacility?.benefit_name && (
+              <Button
+                type="button"
+                variant="default"
+                disabled={!form.formState.isValid}
+                onClick={() => {
+                  setMemory((prev) => ({
+                    ...prev,
+                    transactionId: "",
+                    aadhaarNumber: normalizedId,
+                    patientName: form.getValues("name") ?? "",
+                  }));
+                  goTo("verify-aadhaar-with-demographics");
+                }}
+                className="w-full"
+              >
+                {t("verify_with_demographics")}
+              </Button>
             )}
-          >
-            {t("verify_with_otp")}
-          </Button>
-          {healthFacility?.benefit_name && (
             <Button
               type="button"
               variant="default"
@@ -337,51 +489,232 @@ const EnterAadhaar: FC<EnterAadhaarProps> = ({ setMemory, goTo }) => {
                 setMemory((prev) => ({
                   ...prev,
                   transactionId: "",
-                  aadhaarNumber: form.getValues("aadhaar"),
-                  patientName: form.getValues("name"),
+                  aadhaarNumber: normalizedId,
+                  patientName: form.getValues("name") ?? "",
                 }));
-                goTo("verify-aadhaar-with-demographics");
+                goTo("verify-aadhaar-with-bio");
               }}
               className="w-full"
             >
-              {t("verify_with_demographics")}
+              {t("verify_with_bio")}
             </Button>
+            {faceAuthUrl && (
+              <Button
+                type="button"
+                variant="default"
+                disabled={!form.formState.isValid}
+                onClick={() => {
+                  setMemory((prev) => ({
+                    ...prev,
+                    transactionId: "",
+                    aadhaarNumber: normalizedId,
+                    patientName: form.getValues("name") ?? "",
+                  }));
+                  goTo("verify-aadhaar-with-face");
+                }}
+                className="w-full"
+              >
+                {t("verify_with_face")}
+              </Button>
+            )}
+          </div>
+        ) : (
+          <Popover
+            open={showAuthMethods}
+            onOpenChange={(open) => !open && setShowAuthMethods(false)}
+          >
+            <PopoverTrigger asChild>
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={!form.formState.isValid}
+                loading={checkAuthMethodsMutation.isPending}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  form.handleSubmit(onSubmitLink)(e);
+                }}
+              >
+                {t("get_auth_methods")}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="p-2 gap-2">
+              {authMethods.map((method) => (
+                <Button
+                  key={method}
+                  type="button"
+                  variant="default"
+                  className="w-full justify-start"
+                  onClick={() => {
+                    const otpSystem =
+                      method === "AADHAAR_OTP" ? "aadhaar" : "abdm";
+
+                    setMemory((prev) => ({
+                      ...prev,
+                      id: normalizedId,
+                      idType,
+                      otpSystem,
+                    }));
+
+                    sendOtpMutation.mutate({
+                      value: normalizedId,
+                      type: idType,
+                      otp_system: otpSystem,
+                    });
+                  }}
+                  loading={sendOtpMutation.isPending}
+                >
+                  {t(`abha__auth_method__${method}`)}
+                </Button>
+              ))}
+            </PopoverContent>
+          </Popover>
+        )}
+      </form>
+    </Form>
+  );
+};
+
+type VerifyIdProps = InjectedStepProps<FormMemory> & {
+  onSuccess: (abhaNumber: AbhaNumber) => void;
+};
+
+const verifyIdFormSchema = z.object({
+  _id: z.string(),
+  otp: z.string().length(6, {
+    message: "OTP must be 6 digits",
+  }),
+  _resendOtpCount: z.number().max(MAX_OTP_RESEND_COUNT, {
+    message: "You can only resend OTP 3 times",
+  }),
+});
+
+type VerifyIdFormValues = z.infer<typeof verifyIdFormSchema>;
+
+const VerifyId: FC<VerifyIdProps> = ({ memory, setMemory, onSuccess }) => {
+  const { t } = useTranslation(I18NNAMESPACE);
+
+  const form = useForm<VerifyIdFormValues>({
+    resolver: zodResolver(verifyIdFormSchema),
+    defaultValues: {
+      _id: memory?.id ?? "",
+      otp: "",
+      _resendOtpCount: 0,
+    },
+  });
+
+  const verifyOtpMutation = useMutation({
+    mutationFn: apis.healthId.abhaLoginVerifyOtp,
+    onSuccess: (data) => {
+      if (data) {
+        toast.success(t("otp_verified_successfully"));
+        onSuccess(data.abha_number);
+      }
+    },
+  });
+
+  const resendOtpMutation = useMutation({
+    mutationFn: apis.healthId.abhaLoginSendOtp,
+    onSuccess: (data) => {
+      if (data) {
+        toast.success(data.detail || t("otp_resend_successfully"));
+        form.setValue("otp", "");
+        setMemory((prev) => ({
+          ...prev,
+          transactionId: data.transaction_id,
+        }));
+      }
+    },
+  });
+
+  function onSubmit(values: VerifyIdFormValues) {
+    if (!memory?.transactionId) return;
+
+    verifyOtpMutation.mutate({
+      otp: values.otp,
+      transaction_id: memory.transactionId,
+      type: memory.idType,
+      otp_system: memory.otpSystem,
+    });
+  }
+
+  return (
+    <Form {...form}>
+      <form
+        onSubmit={(e) => {
+          e.stopPropagation();
+          form.handleSubmit(onSubmit)(e);
+        }}
+        className="mt-6 space-y-4"
+      >
+        <FormField
+          control={form.control}
+          name="_id"
+          disabled
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t("any_id")}</FormLabel>
+              <FormControl>
+                <Input placeholder={t("enter_any_id")} {...field} />
+              </FormControl>
+              <FormDescription>{t("any_id_description")}</FormDescription>
+              <FormMessage />
+            </FormItem>
           )}
-          <Button
+        />
+
+        <div className="flex flex-col gap-2 w-fit">
+          <FormField
+            control={form.control}
+            name="otp"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>One-Time Password</FormLabel>
+                <FormControl>
+                  <InputOTP autoFocus maxLength={6} {...field}>
+                    <InputOTPGroup>
+                      <InputOTPSlot index={0} />
+                      <InputOTPSlot index={1} />
+                      <InputOTPSlot index={2} />
+                      <InputOTPSlot index={3} />
+                      <InputOTPSlot index={4} />
+                      <InputOTPSlot index={5} />
+                    </InputOTPGroup>
+                  </InputOTP>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <ButtonWithTimer
             type="button"
-            variant="default"
-            disabled={!form.formState.isValid}
+            variant="secondary"
+            disabled={form.getValues("_resendOtpCount") >= MAX_OTP_RESEND_COUNT}
             onClick={() => {
-              setMemory((prev) => ({
-                ...prev,
-                transactionId: "",
-                aadhaarNumber: form.getValues("aadhaar"),
-                patientName: form.getValues("name"),
-              }));
-              goTo("verify-aadhaar-with-bio");
+              if (!memory?.id || !memory.idType || !memory.otpSystem) return;
+
+              form.setValue(
+                "_resendOtpCount",
+                form.getValues("_resendOtpCount") + 1
+              );
+              resendOtpMutation.mutate({
+                value: memory.id,
+                type: memory.idType,
+                otp_system: memory.otpSystem,
+              });
             }}
-            className="w-full"
+            loading={resendOtpMutation.isPending}
           >
-            {t("verify_with_bio")}
-          </Button>
-          {faceAuthUrl && <Button
-            type="button"
-            variant="default"
-            disabled={!form.formState.isValid}
-            onClick={() => {
-              setMemory((prev) => ({
-                ...prev,
-                transactionId: "",
-                aadhaarNumber: form.getValues("aadhaar"),
-                patientName: form.getValues("name"),
-              }));
-              goTo("verify-aadhaar-with-face");
-            }}
-            className="w-full"
-          >
-            {t("verify_with_face")}
-          </Button>}
+            {t("resend_otp")}
+          </ButtonWithTimer>
         </div>
+
+        <Button
+          type="submit"
+          variant="default"
+          loading={verifyOtpMutation.isPending}
+        >
+          {t("verify_and_link")}
+        </Button>
       </form>
     </Form>
   );
@@ -916,7 +1249,8 @@ const VerifyAadhaarWithFace: FC<VerifyAadhaarWithFaceProps> = ({
 }) => {
   const { t } = useTranslation(I18NNAMESPACE);
   const [isPolling, setIsPolling] = useState(false);
-  const faceAuthUrl = window?.__CARE_PLUGIN_RUNTIME__?.meta?.care_abdm_fe?.config?.faceAuthUrl;
+  const faceAuthUrl =
+    window?.__CARE_PLUGIN_RUNTIME__?.meta?.care_abdm_fe?.config?.faceAuthUrl;
 
   const form = useForm<VerifyAadhaarWithFaceFormValues>({
     resolver: zodResolver(verifyAadhaarWithFaceFormSchema),
@@ -1001,7 +1335,6 @@ const VerifyAadhaarWithFace: FC<VerifyAadhaarWithFaceProps> = ({
   });
 
   useEffect(() => {
-    // if auth init is success, capture pid via face every 5 seconds till status is completed
     if (isPolling) {
       const interval = setInterval(() => {
         capturePidViaFaceMutation.mutate({
@@ -1693,7 +2026,7 @@ const chooseAbhaAddressFormSchema = z.object({
 
 type ChooseAbhaAddressFormValues = z.infer<typeof chooseAbhaAddressFormSchema>;
 
-export const ChooseAbhaAddress: FC<ChooseAbhaAddressProps> = ({
+const ChooseAbhaAddress: FC<ChooseAbhaAddressProps> = ({
   memory,
   setMemory,
   goTo,
@@ -1812,6 +2145,7 @@ export const ChooseAbhaAddress: FC<ChooseAbhaAddressProps> = ({
                 )
                 .map((suggestion) => (
                   <p
+                    key={suggestion}
                     onClick={() => form.setValue("abhaAddress", suggestion)}
                     className="cursor-pointer rounded-md bg-primary-400 px-2.5 py-1 text-xs text-white"
                   >

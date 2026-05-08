@@ -9,7 +9,6 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import { FC, createContext, useContext, useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Tooltip,
   TooltipContent,
@@ -18,10 +17,9 @@ import {
 } from "@/components/ui/tooltip";
 
 import { AbhaNumber } from "@/types/abhaNumber";
-import { CreateWithAadhaar } from "./CreateWithAadhaar";
 import { HealthFacility } from "@/types/healthFacility";
 import { Link } from "raviger";
-import { LinkWithOtp } from "./LinkWithOtp";
+import { LinkAbhaForm } from "./LinkAbhaForm";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { User } from "@/types/user";
 import { apis } from "@/apis";
@@ -40,7 +38,6 @@ type LinkAbhaNumberProps = ButtonProps & {
   backUrl?: string;
   facilityId?: string;
   onSuccess: (abhaNumber: AbhaNumber) => void;
-  defaultMode?: "new" | "existing";
 };
 
 export const LinkAbhaNumber: FC<LinkAbhaNumberProps> = ({
@@ -48,7 +45,6 @@ export const LinkAbhaNumber: FC<LinkAbhaNumberProps> = ({
   onSuccess,
   backUrl,
   enforceLinking = false,
-  defaultMode = "existing",
   ...props
 }) => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(enforceLinking);
@@ -137,30 +133,9 @@ export const LinkAbhaNumber: FC<LinkAbhaNumberProps> = ({
                   </Link>
                 )}
               </DrawerHeader>
-              <Tabs defaultValue={defaultMode} orientation="vertical">
-                <TabsList className="w-full sticky top-0 bg-gray-200 z-10 py-6">
-                  <TabsTrigger
-                    className="flex-1 w-1/2 truncate justify-center"
-                    value="new"
-                  >
-                    Generate new ABHA
-                  </TabsTrigger>
-                  <TabsTrigger
-                    className="flex-1 w-1/2 truncate justify-center"
-                    value="existing"
-                  >
-                    Link existing ABHA
-                  </TabsTrigger>
-                </TabsList>
-                <div className="pb-6 pr-3">
-                  <TabsContent value="new">
-                    <CreateWithAadhaar onSuccess={handleOnSuccess} />
-                  </TabsContent>
-                  <TabsContent value="existing">
-                    <LinkWithOtp onSuccess={handleOnSuccess} />
-                  </TabsContent>
-                </div>
-              </Tabs>
+              <div className="pb-6 pr-3">
+                <LinkAbhaForm onSuccess={handleOnSuccess} />
+              </div>
             </div>
           </ScrollArea>
         </DrawerContent>
