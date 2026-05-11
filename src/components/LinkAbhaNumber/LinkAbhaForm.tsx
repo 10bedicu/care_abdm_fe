@@ -266,8 +266,9 @@ const EnterIdentifier: FC<EnterIdentifierProps> = ({ setMemory, goTo }) => {
     const count = isCreateFlow ? 6 : 5;
     const start = isCreateFlow ? 1 : 2;
     Array.from({ length: count }).forEach((_, index) => {
-      const fieldName =
-        `disclaimer_${index + start}` as keyof EnterIdentifierFormValues;
+      const fieldName = `disclaimer_${
+        index + start
+      }` as keyof EnterIdentifierFormValues;
       form.setValue(fieldName, true, { shouldValidate: true });
     });
   };
@@ -299,9 +300,7 @@ const EnterIdentifier: FC<EnterIdentifierProps> = ({ setMemory, goTo }) => {
           toast.warning(t("get_auth_mode_error"));
         }
 
-        setAuthMethods(
-          methods as (typeof SUPPORTED_AUTH_METHODS)[number][]
-        );
+        setAuthMethods(methods as (typeof SUPPORTED_AUTH_METHODS)[number][]);
       }
     },
   });
