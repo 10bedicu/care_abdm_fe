@@ -49,6 +49,7 @@ export const LinkAbhaNumber: FC<LinkAbhaNumberProps> = ({
   backUrl,
   enforceLinking = false,
   defaultMode = "existing",
+  className,
   ...props
 }) => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(enforceLinking);
@@ -81,12 +82,16 @@ export const LinkAbhaNumber: FC<LinkAbhaNumberProps> = ({
         open={isDrawerOpen}
         onOpenChange={setIsDrawerOpen}
       >
-        <DrawerTrigger disabled={!healthFacility} className="abdm-container">
+        <DrawerTrigger
+          disabled={!healthFacility}
+          className="abdm-container w-full"
+        >
           <TooltipProvider>
             <Tooltip>
-              <TooltipTrigger className="abdm-container">
+              <TooltipTrigger className="abdm-container w-full">
                 <Button
                   type="button"
+                  className={cn(className, "w-full")}
                   onClick={(e) => {
                     e.stopPropagation();
                     e.preventDefault();
@@ -129,7 +134,7 @@ export const LinkAbhaNumber: FC<LinkAbhaNumberProps> = ({
                     href={backUrl}
                     className={cn(
                       buttonVariants({ variant: "outline" }),
-                      "max-sm:w-full"
+                      "max-sm:w-full",
                     )}
                   >
                     <ChevronLeftIcon className="h-4 w-4" />
@@ -174,7 +179,7 @@ export const useLinkAbhaNumberContext = () => {
 
   if (!context) {
     throw new Error(
-      "useLinkAbhaNumberContext must be used within a LinkAbhaNumberProvider"
+      "useLinkAbhaNumberContext must be used within a LinkAbhaNumberProvider",
     );
   }
 
