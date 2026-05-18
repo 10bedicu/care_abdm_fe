@@ -72,6 +72,7 @@ const EncounterActions: FC<WithMeta<EncounterActionsProps>> = ({
           <div className="mt-6">
             <CreateConsentRequestForm
               abhaNumber={abhaNumber}
+              encounter={encounter}
               onSuccess={() => {
                 queryClient.invalidateQueries({
                   queryKey: ["consents", encounter.patient.id],

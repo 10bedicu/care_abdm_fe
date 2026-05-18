@@ -1,11 +1,8 @@
-import dayjs from "@/lib/dayjs";
-
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
-import { FC } from "react";
-import { useForm } from "react-hook-form";
-import { useTranslation } from "react-i18next";
-import { z } from "zod";
+import {
+  CONSENT_HI_TYPES,
+  CONSENT_PURPOSES,
+  ConsentRequest,
+} from "@/types/consent";
 import {
   Form,
   FormControl,
@@ -14,16 +11,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { toast } from "@/lib/utils";
-import { apis } from "@/apis";
-import { AbhaNumber } from "@/types/abhaNumber";
-import {
-  CONSENT_HI_TYPES,
-  CONSENT_PURPOSES,
-  ConsentRequest,
-} from "@/types/consent";
 import {
   Select,
   SelectContent,
@@ -31,13 +18,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DatePickerWithRange } from "./ui/date-range-picker";
+
+import { AbhaNumber } from "@/types/abhaNumber";
+import { Button } from "@/components/ui/button";
 import { DatePicker } from "./ui/date-picker";
-import { MultiSelect } from "./ui/multi-select";
+import { DatePickerWithRange } from "./ui/date-range-picker";
+import { Encounter } from "@/types/encounter";
+import { FC } from "react";
 import { I18NNAMESPACE } from "@/lib/constants";
+import { Input } from "@/components/ui/input";
+import { MultiSelect } from "./ui/multi-select";
+import { apis } from "@/apis";
+import dayjs from "@/lib/dayjs";
+import { toast } from "@/lib/utils";
+import { useForm } from "react-hook-form";
+import { useMutation } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 type CreateConsentRequestFormProps = {
   abhaNumber?: AbhaNumber;
+  encounter: Encounter;
   onSuccess?: (consentRequest: ConsentRequest) => void;
 };
 
@@ -58,6 +60,7 @@ type CreateConsentRequestFormValues = z.infer<
 
 const CreateConsentRequestForm: FC<CreateConsentRequestFormProps> = ({
   abhaNumber,
+  encounter,
   onSuccess,
 }) => {
   const { t } = useTranslation(I18NNAMESPACE);
@@ -76,7 +79,7 @@ const CreateConsentRequestForm: FC<CreateConsentRequestFormProps> = ({
     },
   });
 
-  const createConsentRequestOtpMutation = useMutation({
+  const createConsentRequestMutation = useMutation({
     mutationFn: apis.consent.create,
     onSuccess: (data) => {
       toast.success(t("consent_requested_successfully"));
@@ -85,9 +88,10 @@ const CreateConsentRequestForm: FC<CreateConsentRequestFormProps> = ({
   });
 
   function onSubmit(values: CreateConsentRequestFormValues) {
-    createConsentRequestOtpMutation.mutate({
+    createConsentRequestMutation.mutate({
       ...values,
       patient_abha: form.getValues("patient_abha"),
+      encounter: encounter.id,
       from_time: values.time_range.from,
       to_time: values.time_range.to,
     });
@@ -193,7 +197,7 @@ const CreateConsentRequestForm: FC<CreateConsentRequestFormProps> = ({
         <Button
           type="submit"
           variant="default"
-          loading={createConsentRequestOtpMutation.isPending}
+          loading={createConsentRequestMutation.isPending}
         >
           {t("request_consent")}
         </Button>

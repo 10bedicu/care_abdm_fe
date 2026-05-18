@@ -31,6 +31,7 @@ export const apis = {
 
     create: async (body: {
       patient_abha: string;
+      encounter: string;
       hi_types: ConsentHIType[];
       purpose: ConsentPurpose;
       from_time: Date | string;
