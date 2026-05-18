@@ -1,18 +1,22 @@
-import { FC } from "react";
-import { EncounterTabProps } from ".";
-import { apis } from "@/apis";
-import { useTranslation } from "react-i18next";
-import { useMutation, useQuery } from "@tanstack/react-query";
 import { ConsentArtefact, ConsentRequest } from "@/types/consent";
-import { toast } from "@/lib/utils";
-import dayjs from "@/lib/dayjs";
-import { Button } from "../ui/button";
 import { Loader2Icon, RefreshCcwIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Link } from "raviger";
-import { I18NNAMESPACE } from "@/lib/constants";
+import { useMutation, useQuery } from "@tanstack/react-query";
 
-export const AbdmEncounterTab: FC<EncounterTabProps> = ({ patient }) => {
+import { Button } from "../ui/button";
+import { EncounterTabProps } from ".";
+import { FC } from "react";
+import { I18NNAMESPACE } from "@/lib/constants";
+import { Link } from "raviger";
+import { apis } from "@/apis";
+import { cn } from "@/lib/utils";
+import dayjs from "@/lib/dayjs";
+import { toast } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
+
+export const AbdmEncounterTab: FC<EncounterTabProps> = ({
+  patient,
+  encounter,
+}) => {
   const { t } = useTranslation(I18NNAMESPACE);
 
   const { data, isLoading } = useQuery({
@@ -20,6 +24,7 @@ export const AbdmEncounterTab: FC<EncounterTabProps> = ({ patient }) => {
     queryFn: () =>
       apis.consent.list({
         patient: patient.id,
+        encounter: encounter.id,
         ordering: "-created_date",
       }),
     enabled: !!patient.id,

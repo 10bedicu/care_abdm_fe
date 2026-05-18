@@ -22,6 +22,7 @@ export const apis = {
     list: async (query?: {
       facility?: string;
       patient?: string;
+      encounter?: string;
       ordering?: string;
     }) => {
       return await request<PaginatedResponse<ConsentRequest>>(
