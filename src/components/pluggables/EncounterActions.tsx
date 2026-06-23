@@ -56,13 +56,13 @@ const EncounterActions: FC<WithMeta<EncounterActionsProps>> = ({
             variant="ghost"
             className={cn(
               "relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden transition-colors focus:bg-gray-100 focus:text-gray-900 data-disabled:pointer-events-none data-disabled:opacity-50 [&>svg]:size-4 [&>svg]:shrink-0 dark:focus:bg-gray-800 dark:focus:text-gray-50",
-              className
+              className,
             )}
           >
             {t("hi__fetch_records")}
           </Button>
         </DialogTrigger>
-        <DialogContent className="abdm-container sm:max-w-[425px]">
+        <DialogContent className="abdm-container sm:max-w-xl">
           <DialogHeader>
             <DialogTitle>{t("hi__fetch_records")}</DialogTitle>
             <DialogDescription>
