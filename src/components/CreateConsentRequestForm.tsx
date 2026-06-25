@@ -188,7 +188,7 @@ const CreateConsentRequestForm: FC<CreateConsentRequestFormProps> = ({
           render={({ field }) => (
             <FormItem className="flex flex-col">
               <FormLabel>{t("consent_request__expiry")}</FormLabel>
-              <DatePicker value={field.value} onChange={field.onChange} />
+              <DatePicker date={field.value} onChange={field.onChange} />
               <FormMessage />
             </FormItem>
           )}
