@@ -32,7 +32,7 @@ export const AbdmEncounterTab: FC<EncounterTabProps> = ({
 
   if (isLoading) {
     return (
-      <div className="mt-12 flex flex-col items-center justify-center gap-2.5">
+      <div className="abdm-container mt-12 flex flex-col items-center justify-center gap-2.5">
         <Loader2Icon className="w-6 h-6 animate-spin text-primary-500" />
         <p className="font-semibold text-secondary-600">
           {t("loading_consent_requests")}
@@ -43,7 +43,7 @@ export const AbdmEncounterTab: FC<EncounterTabProps> = ({
 
   if (!data?.results.length) {
     return (
-      <div className="mt-12 flex flex-col items-center justify-center gap-2.5">
+      <div className="abdm-container mt-12 flex flex-col items-center justify-center gap-2.5">
         <p className="font-semibold text-secondary-600">
           {t("no_records_found")}
         </p>
@@ -55,7 +55,7 @@ export const AbdmEncounterTab: FC<EncounterTabProps> = ({
   }
 
   return (
-    <div className="mt-6 flex flex-col gap-6">
+    <div className="abdm-container mt-6 flex flex-col gap-6">
       {data?.results.map((record) => {
         return <ConsentRequestCard key={record.id} consent={record} />;
       })}
