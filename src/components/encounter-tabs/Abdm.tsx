@@ -21,16 +21,16 @@ import { useTranslation } from "react-i18next";
 function getConsentStatusBadgeClass(status: ConsentRequest["status"]) {
   switch (status) {
     case "GRANTED":
-      return "border-transparent bg-green-100 text-green-800";
+      return "border-transparent bg-green-100 text-green-800 hover:bg-green-100";
     case "REQUESTED":
-      return "border-transparent bg-amber-100 text-amber-800";
+      return "border-transparent bg-amber-100 text-amber-800 hover:bg-amber-100";
     case "EXPIRED":
-      return "border-transparent bg-secondary-100 text-secondary-700";
+      return "border-transparent bg-secondary-100 text-secondary-700 hover:bg-secondary-100";
     case "DENIED":
     case "REVOKED":
-      return "border-transparent bg-red-100 text-red-800";
+      return "border-transparent bg-red-100 text-red-800 hover:bg-red-100";
     default:
-      return "border-transparent bg-secondary-100 text-secondary-700";
+      return "border-transparent bg-secondary-100 text-secondary-700 hover:bg-secondary-100";
   }
 }
 
