@@ -1,4 +1,4 @@
-import { FC } from "react";
+import { FC, useMemo } from "react";
 import { HIProfile } from "hi-profiles";
 import { ArrowLeftIcon, Loader2Icon } from "lucide-react";
 import { Link } from "raviger";
@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import Page from "@/components/ui/page";
 import { I18NNAMESPACE } from "@/lib/constants";
 import { encounterPath } from "@/lib/paths";
+// TEMPORARY PATCH: Remove when HIP matching is handled server-side.
+import { shouldIncludeHiBundle } from "@/lib/patches/filterHiBundleByConsentHip";
 
 interface HealthInformationProps {
   artefactId: string;
@@ -37,6 +39,34 @@ const HealthInformation: FC<HealthInformationProps> = ({
     enabled: !!artefactId,
   });
 
+  // TEMPORARY PATCH: Remove when MedicationRequest is changed from date based to prescription based.
+  const { data: consentsData } = useQuery({
+    queryKey: ["consents", patientId, encounterId],
+    queryFn: () =>
+      apis.consent.list({
+        patient: patientId,
+        encounter: encounterId,
+      }),
+    enabled: !!patientId && !!encounterId,
+  });
+
+  const consentHip = useMemo(() => {
+    if (!consentsData) {
+      return undefined;
+    }
+
+    for (const consent of consentsData.results) {
+      const artefact = consent.consent_artefacts?.find(
+        (item) => item.id === artefactId,
+      );
+      if (artefact) {
+        return artefact.hip;
+      }
+    }
+
+    return null;
+  }, [consentsData, artefactId]);
+
   const error: any = errorT; // eslint-disable-line @typescript-eslint/no-explicit-any Intentionally typecasting to any
 
   const parseData = (data: string) => {
@@ -48,6 +78,21 @@ const HealthInformation: FC<HealthInformationProps> = ({
       );
     }
   };
+
+  // TEMPORARY PATCH: Remove when MedicationRequest is changed from date based to prescription based.
+  const filteredItems = useMemo(() => {
+    if (!data?.data) {
+      return [];
+    }
+
+    if (consentHip === undefined) {
+      return data.data;
+    }
+
+    return data.data.filter((item) =>
+      shouldIncludeHiBundle(parseData(item.content), consentHip),
+    );
+  }, [consentHip, data?.data]);
 
   const pageHeader = (
     <div className="abdm-container flex items-center gap-3">
@@ -113,7 +158,7 @@ const HealthInformation: FC<HealthInformationProps> = ({
             </h4>
           </>
         )}
-        {data?.data.map((item) => (
+        {filteredItems.map((item) => (
           <HIProfile
             key={item.care_context_reference}
             bundle={parseData(item.content)}
