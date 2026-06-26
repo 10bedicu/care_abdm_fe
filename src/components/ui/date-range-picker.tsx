@@ -1,6 +1,6 @@
 import { format, isBefore, isSameDay } from "date-fns";
-import { CalendarIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { CalendarIcon, ChevronDown } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { DateRange } from "react-day-picker";
 import { useTranslation } from "react-i18next";
 
@@ -47,13 +47,21 @@ export function DatePickerWithRange({
 }: DatePickerWithRangeProps) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
+  const [showManualInputs, setShowManualInputs] = useState(false);
   const [dateFrom, setDateFrom] = useState<Date | undefined>(value?.from);
   const [dateTo, setDateTo] = useState<Date | undefined>(value?.to);
+  const fromInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setDateFrom(value?.from);
     setDateTo(value?.to);
   }, [value]);
+
+  useEffect(() => {
+    if (showManualInputs) {
+      fromInputRef.current?.focus();
+    }
+  }, [showManualInputs]);
 
   const handleDateChange = (date: DateRange | undefined) => {
     setDateFrom(date?.from);
@@ -64,7 +72,16 @@ export function DatePickerWithRange({
   const formattedRange = formatDateRange(value);
 
   return (
-    <Popover open={open} onOpenChange={setOpen} modal>
+    <Popover
+      open={open}
+      onOpenChange={(nextOpen) => {
+        setOpen(nextOpen);
+        if (!nextOpen) {
+          setShowManualInputs(false);
+        }
+      }}
+      modal={!showManualInputs}
+    >
       <PopoverTrigger asChild>
         <Button
           type="button"
@@ -88,13 +105,25 @@ export function DatePickerWithRange({
       <PopoverContent
         className="w-[320px] p-0"
         align="start"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        onPointerDownOutside={(e) => {
+          if (showManualInputs) {
+            e.preventDefault();
+          }
+        }}
+        onFocusOutside={(e) => {
+          if (showManualInputs) {
+            e.preventDefault();
+          }
+        }}
+        onInteractOutside={(e) => {
+          if (showManualInputs) {
+            e.preventDefault();
+          }
+        }}
         onWheel={(e) => e.stopPropagation()}
       >
-        <div
-          className="flex w-full max-h-[30vh] touch-pan-y flex-col overflow-y-auto overscroll-contain"
-          onWheel={(e) => e.stopPropagation()}
-          onTouchMove={(e) => e.stopPropagation()}
-        >
+        {!showManualInputs ? (
           <Calendar
             mode="range"
             selected={{ from: dateFrom, to: dateTo }}
@@ -124,15 +153,18 @@ export function DatePickerWithRange({
             monthCaptionClassName="self-center"
             rangeMiddleClassName="bg-primary/10 [&>button]:rounded-md"
           />
-          <div className="my-2">
-            <Separator orientation="horizontal" className="h-px bg-gray-200" />
-          </div>
-          <div className="flex flex-col gap-2 p-3 pt-0">
+        ) : (
+          <div
+            className="flex flex-col gap-2 p-3"
+            onWheel={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
+          >
             <div>
               <label className="mb-1 block text-sm text-gray-600 capitalize">
                 {t("from")}
               </label>
               <Input
+                ref={fromInputRef}
                 type="date"
                 value={dateFrom ? format(dateFrom, "yyyy-MM-dd") : ""}
                 onChange={(e) => {
@@ -143,7 +175,7 @@ export function DatePickerWithRange({
                   onChange?.({ from: nextFrom, to: dateTo });
                 }}
                 placeholder={t("start_date")}
-                className="flex flex-col justify-between text-sm"
+                className="text-sm"
               />
             </div>
             <div>
@@ -161,11 +193,12 @@ export function DatePickerWithRange({
                   onChange?.({ from: dateFrom, to: nextTo });
                 }}
                 placeholder={t("end_date")}
-                className="flex flex-col justify-between text-sm"
+                className="text-sm"
               />
             </div>
           </div>
-        </div>
+        )}
+
         <div className="p-2 px-3">
           <Button
             type="button"
@@ -180,6 +213,28 @@ export function DatePickerWithRange({
             {t("confirm")}
           </Button>
         </div>
+
+        <Separator orientation="horizontal" className="h-px bg-gray-200" />
+
+        <button
+          type="button"
+          className="flex w-full items-center justify-between px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          onClick={() => setShowManualInputs((prev) => !prev)}
+        >
+          <span>
+            {showManualInputs
+              ? t("use_calendar", { defaultValue: "Use calendar" })
+              : t("enter_dates_manually", {
+                  defaultValue: "Enter dates manually",
+                })}
+          </span>
+          <ChevronDown
+            className={cn(
+              "size-4 shrink-0 transition-transform",
+              showManualInputs && "rotate-180",
+            )}
+          />
+        </button>
       </PopoverContent>
     </Popover>
   );
