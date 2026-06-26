@@ -1,4 +1,4 @@
-import { format, isBefore, isSameDay } from "date-fns";
+import { format, isBefore, isSameDay, isToday } from "date-fns";
 import { CalendarIcon, ChevronDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { DateRange } from "react-day-picker";
@@ -22,6 +22,19 @@ interface DatePickerWithRangeProps {
   className?: string;
   placeholder?: string;
   disablePicker?: boolean;
+}
+
+function normalizeToDate(date: Date | undefined): Date | undefined {
+  if (!date) return undefined;
+  return isToday(date) ? new Date() : date;
+}
+
+function normalizeDateRange(date: DateRange | undefined): DateRange | undefined {
+  if (!date) return date;
+  return {
+    ...date,
+    to: normalizeToDate(date.to),
+  };
 }
 
 function formatDateRange(value?: DateRange) {
@@ -64,9 +77,10 @@ export function DatePickerWithRange({
   }, [showManualInputs]);
 
   const handleDateChange = (date: DateRange | undefined) => {
-    setDateFrom(date?.from);
-    setDateTo(date?.to);
-    onChange?.(date);
+    const normalized = normalizeDateRange(date);
+    setDateFrom(normalized?.from);
+    setDateTo(normalized?.to);
+    onChange?.(normalized);
   };
 
   const formattedRange = formatDateRange(value);
@@ -186,9 +200,9 @@ export function DatePickerWithRange({
                 type="date"
                 value={dateTo ? format(dateTo, "yyyy-MM-dd") : ""}
                 onChange={(e) => {
-                  const nextTo = e.target.value
-                    ? new Date(e.target.value)
-                    : undefined;
+                  const nextTo = normalizeToDate(
+                    e.target.value ? new Date(e.target.value) : undefined,
+                  );
                   setDateTo(nextTo);
                   onChange?.({ from: dateFrom, to: nextTo });
                 }}
