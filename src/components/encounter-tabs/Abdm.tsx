@@ -200,7 +200,13 @@ function ConsentRequestCard({
               </div>
               <p className="text-sm text-secondary-600">
                 {t("valid_till", {
-                  date: dayjs(consent.expiry).format("MMM DD, YYYY"),
+                  date: dayjs(consent.expiry).format("MMM D, YYYY"),
+                })}
+              </p>
+              <p className="text-sm text-secondary-600">
+                {t("consent_records_date_range", {
+                  from: dayjs(consent.from_time).format("MMM D, YYYY"),
+                  to: dayjs(consent.to_time).format("MMM D, YYYY"),
                 })}
               </p>
             </div>
