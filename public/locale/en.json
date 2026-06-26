@@ -117,6 +117,7 @@
   "checking_consent_status": "Consent request status is being checked!",
   "async_operation_warning": "This operation may take some time. Please check back later.",
   "loading_health_information": "Loading Health Information",
+  "back": "Back",
   "configure_health_facility": "Configure Health Facility",
   "configure_health_facility_description": "Configure the health facility, link your ABDM health facility with care and register it as a service in bridge",
   "generate_scan_and_share_qr": "Generate Scan and Share QR",

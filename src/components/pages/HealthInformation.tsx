@@ -1,18 +1,31 @@
 import { FC } from "react";
 import { HIProfile } from "hi-profiles";
-import { I18NNAMESPACE } from "@/lib/constants";
-import { Loader2Icon } from "lucide-react";
-import Page from "@/components/ui/page";
-import { apis } from "@/apis";
+import { ArrowLeftIcon, Loader2Icon } from "lucide-react";
+import { Link } from "raviger";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 
+import { apis } from "@/apis";
+import { Button } from "@/components/ui/button";
+import Page from "@/components/ui/page";
+import { I18NNAMESPACE } from "@/lib/constants";
+import { encounterPath } from "@/lib/paths";
+
 interface HealthInformationProps {
   artefactId: string;
+  facilityId: string;
+  patientId: string;
+  encounterId: string;
 }
 
-const HealthInformation: FC<HealthInformationProps> = ({ artefactId }) => {
+const HealthInformation: FC<HealthInformationProps> = ({
+  artefactId,
+  facilityId,
+  patientId,
+  encounterId,
+}) => {
   const { t } = useTranslation(I18NNAMESPACE);
+  const encounterUrl = encounterPath(facilityId, patientId, encounterId, "abdm");
 
   const {
     data,
@@ -26,17 +39,6 @@ const HealthInformation: FC<HealthInformationProps> = ({ artefactId }) => {
 
   const error: any = errorT; // eslint-disable-line @typescript-eslint/no-explicit-any Intentionally typecasting to any
 
-  if (isLoading) {
-    return (
-      <div className="mt-12 flex flex-col items-center justify-center gap-2.5">
-        <Loader2Icon className="w-6 h-6 animate-spin text-primary-500" />
-        <p className="font-semibold text-secondary-600">
-          {t("loading_health_information")}
-        </p>
-      </div>
-    );
-  }
-
   const parseData = (data: string) => {
     try {
       return JSON.parse(data);
@@ -47,8 +49,41 @@ const HealthInformation: FC<HealthInformationProps> = ({ artefactId }) => {
     }
   };
 
+  const pageHeader = (
+    <div className="abdm-container flex items-center gap-3">
+      <Button
+        variant="outline"
+        className="font-semibold underline underline-offset-2"
+        asChild
+      >
+        <Link href={encounterUrl}>
+          <ArrowLeftIcon />
+          {t("back")}
+        </Link>
+      </Button>
+      <h1 className="text-xl font-semibold text-secondary-900">
+        {t("hi__page_title")}
+      </h1>
+    </div>
+  );
+
+  if (isLoading) {
+    return (
+      <Page>
+        {pageHeader}
+        <div className="mt-12 flex flex-col items-center justify-center gap-2.5">
+          <Loader2Icon className="w-6 h-6 animate-spin text-primary-500" />
+          <p className="font-semibold text-secondary-600">
+            {t("loading_health_information")}
+          </p>
+        </div>
+      </Page>
+    );
+  }
+
   return (
-    <Page title={t("hi__page_title")}>
+    <Page>
+      {pageHeader}
       <div className="mt-10 flex flex-col items-center justify-center gap-6">
         {!!error?.is_archived && (
           <>

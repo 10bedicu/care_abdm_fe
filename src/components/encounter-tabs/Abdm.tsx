@@ -4,12 +4,15 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 
 import { Button } from "../ui/button";
 import { EncounterTabProps } from ".";
+import { Encounter } from "@/types/encounter";
 import { FC } from "react";
 import { I18NNAMESPACE } from "@/lib/constants";
 import { Link } from "raviger";
+import { Patient } from "@/types/patient";
 import { apis } from "@/apis";
 import { cn } from "@/lib/utils";
 import dayjs from "@/lib/dayjs";
+import { healthInformationPath } from "@/lib/paths";
 import { toast } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 
@@ -57,7 +60,14 @@ export const AbdmEncounterTab: FC<EncounterTabProps> = ({
   return (
     <div className="abdm-container mt-6 flex flex-col gap-6">
       {data?.results.map((record) => {
-        return <ConsentRequestCard key={record.id} consent={record} />;
+        return (
+          <ConsentRequestCard
+            key={record.id}
+            consent={record}
+            encounter={encounter}
+            patient={patient}
+          />
+        );
       })}
     </div>
   );
@@ -65,14 +75,27 @@ export const AbdmEncounterTab: FC<EncounterTabProps> = ({
 
 interface IConsentArtefactCardProps {
   artefact: ConsentArtefact;
+  facilityId: string;
+  patientId: string;
+  encounterId: string;
 }
 
-function ConsentArtefactCard({ artefact }: IConsentArtefactCardProps) {
+function ConsentArtefactCard({
+  artefact,
+  facilityId,
+  patientId,
+  encounterId,
+}: IConsentArtefactCardProps) {
   const { t } = useTranslation(I18NNAMESPACE);
 
   return (
     <Link
-      href={`/abdm/health-information/${artefact.id}`}
+      href={healthInformationPath(
+        facilityId,
+        patientId,
+        encounterId,
+        artefact.id,
+      )}
       className="w-full cursor-pointer overflow-hidden bg-white shadow-sm sm:rounded-lg"
     >
       <div className="flex flex-col items-center justify-between gap-4 px-4 py-5 sm:flex-row sm:gap-0 sm:px-6">
@@ -115,9 +138,15 @@ function ConsentArtefactCard({ artefact }: IConsentArtefactCardProps) {
 
 interface IConsentRequestCardProps {
   consent: ConsentRequest;
+  encounter: Encounter;
+  patient: Patient;
 }
 
-function ConsentRequestCard({ consent }: IConsentRequestCardProps) {
+function ConsentRequestCard({
+  consent,
+  encounter,
+  patient,
+}: IConsentRequestCardProps) {
   const { t } = useTranslation(I18NNAMESPACE);
 
   const checkStatusMutation = useMutation({
@@ -170,7 +199,13 @@ function ConsentRequestCard({ consent }: IConsentRequestCardProps) {
       {consent.consent_artefacts?.length ? (
         <div className="flex flex-wrap items-center justify-center border-t border-secondary-200 bg-secondary-50 px-4 py-5 sm:gap-4">
           {consent.consent_artefacts?.map((artefact) => (
-            <ConsentArtefactCard key={artefact.id} artefact={artefact} />
+            <ConsentArtefactCard
+              key={artefact.id}
+              artefact={artefact}
+              facilityId={encounter.facility.id}
+              patientId={patient.id}
+              encounterId={encounter.id}
+            />
           ))}
         </div>
       ) : (
