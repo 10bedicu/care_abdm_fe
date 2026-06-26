@@ -29,11 +29,14 @@ const PatientRegistrationForm: FC<WithMeta<PatientRegistrationFormProps>> = ({
   const queryClient = useQueryClient();
   const { t } = useTranslation(I18NNAMESPACE);
 
-  const { data: abhaNumber, refetch } = useQuery({
+  const { data: abhaNumber } = useQuery({
     queryKey: ["abhaNumber", patientId],
     queryFn: () => apis.abhaNumber.get(patientId!),
     enabled: !!patientId,
+    retry: false,
   });
+
+  const patientName = form.watch("name");
 
   useEffect(() => {
     if (abhaNumber) {
@@ -41,14 +44,14 @@ const PatientRegistrationForm: FC<WithMeta<PatientRegistrationFormProps>> = ({
       form.setValue("abha_number", abhaNumber.abha_number, setFormValueOpts);
       form.setValue("abha_address", abhaNumber.health_id, setFormValueOpts);
     }
-  }, [abhaNumber]);
+  }, [abhaNumber, patientName, form]);
 
   const linkAbhaNumberAndPatientMutation = useMutation({
     mutationFn: apis.healthId.linkAbhaNumberAndPatient,
     onSuccess: (data) => {
       if (data) {
         toast.success(data.detail || t("abha_number_linked_successfully"));
-        refetch();
+        queryClient.invalidateQueries({ queryKey: ["abhaNumber", patientId] });
       }
     },
     onError: (error) => {
@@ -91,7 +94,9 @@ const PatientRegistrationForm: FC<WithMeta<PatientRegistrationFormProps>> = ({
     },
   });
 
-  if (!form.watch("abha_id")) {
+  const abhaId = form.watch("abha_id");
+
+  if (!abhaId && !abhaNumber) {
     return (
       <div className="abdm-container flex justify-end w-full">
         <LinkAbhaNumber
@@ -178,12 +183,18 @@ const PatientRegistrationForm: FC<WithMeta<PatientRegistrationFormProps>> = ({
 
       <div className="space-y-1">
         <Label>ABHA Number</Label>
-        <Input value={form.getValues("abha_number")} disabled />
+        <Input
+          value={abhaNumber?.abha_number || form.watch("abha_number") || ""}
+          disabled
+        />
       </div>
 
       <div className="space-y-1">
         <Label>ABHA Address</Label>
-        <Input value={form.getValues("abha_address")} disabled />
+        <Input
+          value={abhaNumber?.health_id || form.watch("abha_address") || ""}
+          disabled
+        />
       </div>
 
       {abhaProfile && <ShowAbhaProfile abhaNumber={abhaProfile} />}

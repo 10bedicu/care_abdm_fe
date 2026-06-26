@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { FC } from "react";
 import { I18NNAMESPACE } from "@/lib/constants";
@@ -20,11 +20,13 @@ const PatientHomeActions: FC<WithMeta<PatientHomeActionsProps>> = ({
   facilityId,
   className,
 }) => {
+  const queryClient = useQueryClient();
   const { t } = useTranslation(I18NNAMESPACE);
-  const { data: abhaNumber, refetch } = useQuery({
+  const { data: abhaNumber } = useQuery({
     queryKey: ["abhaNumber", patient.id],
     queryFn: () => apis.abhaNumber.get(patient.id),
     enabled: !!patient.id,
+    retry: false,
   });
 
   const linkAbhaNumberAndPatientMutation = useMutation({
@@ -32,7 +34,7 @@ const PatientHomeActions: FC<WithMeta<PatientHomeActionsProps>> = ({
     onSuccess: (data) => {
       if (data) {
         toast.success(data.detail || t("abha_number_linked_successfully"));
-        refetch();
+        queryClient.invalidateQueries({ queryKey: ["abhaNumber", patient.id] });
       }
     },
     onError: (error) => {
