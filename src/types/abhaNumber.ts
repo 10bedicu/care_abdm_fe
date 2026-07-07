@@ -22,3 +22,13 @@ export type AbhaNumber = {
   patient: string | null;
   patient_object: unknown | null; // FIXME: Patient type
 };
+
+export type AbhaLoginAccount = {
+  id: number;
+  abha_number: string | null;
+  preferred_abha_address: string | null;
+  name: string | null;
+  gender: "F" | "M" | "O" | null;
+  date_of_birth: string | null;
+  profile_photo: string | null;
+};

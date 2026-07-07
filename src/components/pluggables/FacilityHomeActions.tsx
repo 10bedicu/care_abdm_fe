@@ -42,7 +42,7 @@ const FacilityHomeActions: FC<WithMeta<FacilityHomeActionsProps>> = ({
           <Button
             variant="outline"
             size="sm"
-            className="cursor-pointer font-semibold"
+            className="flex justify-start items-center border border-gray-200 rounded-md p-2 shadow-sm"
           >
             <SettingsIcon />
             {t("configure_health_facility")}

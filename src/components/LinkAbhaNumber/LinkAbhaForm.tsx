@@ -42,7 +42,7 @@ import { Trans, useTranslation } from "react-i18next";
 import useMultiStepForm, { InjectedStepProps } from "./useMultiStepForm";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
-import { AbhaNumber } from "@/types/abhaNumber";
+import { AbhaLoginAccount, AbhaNumber } from "@/types/abhaNumber";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { QRCodeSVG } from "qrcode.react";
@@ -77,6 +77,7 @@ type FormMemory = {
   id: string;
   idType: IdType;
   otpSystem: "aadhaar" | "abdm";
+  loginAccounts?: AbhaLoginAccount[];
 };
 
 const normalizeId = (id: string) =>
@@ -106,6 +107,12 @@ export const LinkAbhaForm: FC<LinkAbhaFormProps> = ({ onSuccess }) => {
       {
         id: "verify-id",
         element: <VerifyId {...({ onSuccess } as VerifyIdProps)} />,
+      },
+      {
+        id: "choose-abha-account",
+        element: (
+          <ChooseAbhaAccount {...({ onSuccess } as ChooseAbhaAccountProps)} />
+        ),
       },
       {
         id: "verify-aadhaar-with-otp",
@@ -163,7 +170,7 @@ export const LinkAbhaForm: FC<LinkAbhaFormProps> = ({ onSuccess }) => {
       id: "",
       idType: "aadhaar",
       otpSystem: "aadhaar",
-    }
+    },
   );
 
   return <div>{currentStep}</div>;
@@ -589,7 +596,12 @@ const verifyIdFormSchema = z.object({
 
 type VerifyIdFormValues = z.infer<typeof verifyIdFormSchema>;
 
-const VerifyId: FC<VerifyIdProps> = ({ memory, setMemory, onSuccess }) => {
+const VerifyId: FC<VerifyIdProps> = ({
+  memory,
+  setMemory,
+  goTo,
+  onSuccess,
+}) => {
   const { t } = useTranslation(I18NNAMESPACE);
 
   const form = useForm<VerifyIdFormValues>({
@@ -601,13 +613,38 @@ const VerifyId: FC<VerifyIdProps> = ({ memory, setMemory, onSuccess }) => {
     },
   });
 
-  const verifyOtpMutation = useMutation({
-    mutationFn: apis.healthId.abhaLoginVerifyOtp,
+  const verifyUserMutation = useMutation({
+    mutationFn: apis.healthId.abhaLoginVerifyUser,
     onSuccess: (data) => {
       if (data) {
         toast.success(t("otp_verified_successfully"));
         onSuccess(data.abha_number);
       }
+    },
+  });
+
+  const verifyOtpMutation = useMutation({
+    mutationFn: apis.healthId.abhaLoginVerifyOtp,
+    onSuccess: (data) => {
+      if (!data) return;
+
+      const accounts = data.accounts ?? [];
+
+      setMemory((prev) => ({
+        ...prev,
+        transactionId: data.transaction_id,
+        loginAccounts: accounts,
+      }));
+
+      if (accounts.length > 1) {
+        goTo("choose-abha-account");
+        return;
+      }
+
+      verifyUserMutation.mutate({
+        transaction_id: data.transaction_id,
+        account_id: accounts[0]?.id ?? 0,
+      });
     },
   });
 
@@ -693,7 +730,7 @@ const VerifyId: FC<VerifyIdProps> = ({ memory, setMemory, onSuccess }) => {
 
               form.setValue(
                 "_resendOtpCount",
-                form.getValues("_resendOtpCount") + 1
+                form.getValues("_resendOtpCount") + 1,
               );
               resendOtpMutation.mutate({
                 value: memory.id,
@@ -710,12 +747,98 @@ const VerifyId: FC<VerifyIdProps> = ({ memory, setMemory, onSuccess }) => {
         <Button
           type="submit"
           variant="default"
-          loading={verifyOtpMutation.isPending}
+          loading={verifyOtpMutation.isPending || verifyUserMutation.isPending}
         >
           {t("verify_and_link")}
         </Button>
       </form>
     </Form>
+  );
+};
+
+type ChooseAbhaAccountProps = InjectedStepProps<FormMemory> & {
+  onSuccess: (abhaNumber: AbhaNumber) => void;
+};
+
+const ChooseAbhaAccount: FC<ChooseAbhaAccountProps> = ({
+  memory,
+  onSuccess,
+}) => {
+  const { t } = useTranslation(I18NNAMESPACE);
+
+  const accounts = memory?.loginAccounts ?? [];
+
+  const verifyUserMutation = useMutation({
+    mutationFn: apis.healthId.abhaLoginVerifyUser,
+    onSuccess: (data) => {
+      if (data) {
+        toast.success(t("otp_verified_successfully"));
+        onSuccess(data.abha_number);
+      }
+    },
+  });
+
+  return (
+    <div className="mt-6 space-y-4">
+      <div>
+        <h3 className="text-lg font-medium text-secondary-800">
+          {t("choose_abha_account")}
+        </h3>
+        <p className="text-sm text-secondary-600">
+          {t("choose_abha_account_description")}
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        {accounts.map((account) => (
+          <button
+            key={account.id}
+            type="button"
+            disabled={verifyUserMutation.isPending}
+            onClick={() => {
+              if (!memory?.transactionId) return;
+
+              verifyUserMutation.mutate({
+                transaction_id: memory.transactionId,
+                account_id: account.id,
+              });
+            }}
+            className={cn(
+              "flex items-center gap-3 rounded-md border border-secondary-300 p-3 text-left transition-colors hover:border-primary-400 hover:bg-primary-50",
+              verifyUserMutation.isPending && "cursor-not-allowed opacity-60",
+            )}
+          >
+            {account.profile_photo ? (
+              <img
+                src={`data:image/jpeg;base64,${account.profile_photo}`}
+                alt={account.name ?? t("abha_account")}
+                className="size-10 rounded-full object-cover"
+              />
+            ) : (
+              <div className="flex size-10 items-center justify-center rounded-full bg-primary-100 text-sm font-medium text-primary-700">
+                {(account.name ?? "?").charAt(0).toUpperCase()}
+              </div>
+            )}
+
+            <div className="flex flex-col">
+              <span className="text-sm font-medium text-secondary-800">
+                {account.name ?? t("abha_account")}
+              </span>
+              {account.abha_number && (
+                <span className="text-xs text-secondary-600">
+                  {account.abha_number}
+                </span>
+              )}
+              {account.preferred_abha_address && (
+                <span className="text-xs text-secondary-600">
+                  {account.preferred_abha_address}
+                </span>
+              )}
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
   );
 };
 

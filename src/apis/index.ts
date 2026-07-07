@@ -7,7 +7,7 @@ import {
 } from "@/types/consent";
 import { queryString, request } from "./request";
 
-import { AbhaNumber } from "@/types/abhaNumber";
+import { AbhaLoginAccount, AbhaNumber } from "@/types/abhaNumber";
 import { GovtOrganization } from "@/types/govtOrganization";
 import { HealthFacility } from "@/types/healthFacility";
 import { HealthInformation } from "@/types/healthInformation";
@@ -22,6 +22,7 @@ export const apis = {
     list: async (query?: {
       facility?: string;
       patient?: string;
+      encounter?: string;
       ordering?: string;
     }) => {
       return await request<PaginatedResponse<ConsentRequest>>(
@@ -31,6 +32,7 @@ export const apis = {
 
     create: async (body: {
       patient_abha: string;
+      encounter: string;
       hi_types: ConsentHIType[];
       purpose: ConsentPurpose;
       from_time: Date | string;
@@ -349,9 +351,22 @@ export const apis = {
       otp_system: "abdm" | "aadhaar";
     }) => {
       return await request<{
+        transaction_id: string;
+        accounts: AbhaLoginAccount[];
+      }>("/api/abdm/v3/health_id/login/verify_otp/", {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+    },
+
+    abhaLoginVerifyUser: async (body: {
+      transaction_id: string;
+      account_id: number;
+    }) => {
+      return await request<{
         abha_number: AbhaNumber;
         created: boolean;
-      }>("/api/abdm/v3/health_id/login/verify_otp/", {
+      }>("/api/abdm/v3/health_id/login/verify_user/", {
         method: "POST",
         body: JSON.stringify(body),
       });

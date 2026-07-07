@@ -18,6 +18,8 @@ type PatientRegistrationFormProps = {
   patientId?: string;
 };
 
+const setFormValueOpts = { shouldDirty: true } as const;
+
 const PatientRegistrationForm: FC<WithMeta<PatientRegistrationFormProps>> = ({
   form,
   facilityId,
@@ -27,26 +29,29 @@ const PatientRegistrationForm: FC<WithMeta<PatientRegistrationFormProps>> = ({
   const queryClient = useQueryClient();
   const { t } = useTranslation(I18NNAMESPACE);
 
-  const { data: abhaNumber, refetch } = useQuery({
+  const { data: abhaNumber } = useQuery({
     queryKey: ["abhaNumber", patientId],
     queryFn: () => apis.abhaNumber.get(patientId!),
     enabled: !!patientId,
+    retry: false,
   });
+
+  const patientName = form.watch("name");
 
   useEffect(() => {
     if (abhaNumber) {
-      form.setValue("abha_id", abhaNumber.external_id);
-      form.setValue("abha_number", abhaNumber.abha_number);
-      form.setValue("abha_address", abhaNumber.health_id);
+      form.setValue("abha_id", abhaNumber.external_id, setFormValueOpts);
+      form.setValue("abha_number", abhaNumber.abha_number, setFormValueOpts);
+      form.setValue("abha_address", abhaNumber.health_id, setFormValueOpts);
     }
-  }, [abhaNumber]);
+  }, [abhaNumber, patientName, form]);
 
   const linkAbhaNumberAndPatientMutation = useMutation({
     mutationFn: apis.healthId.linkAbhaNumberAndPatient,
     onSuccess: (data) => {
       if (data) {
         toast.success(data.detail || t("abha_number_linked_successfully"));
-        refetch();
+        queryClient.invalidateQueries({ queryKey: ["abhaNumber", patientId] });
       }
     },
     onError: (error) => {
@@ -84,12 +89,14 @@ const PatientRegistrationForm: FC<WithMeta<PatientRegistrationFormProps>> = ({
         return;
       }
 
-      form.setValue("_selected_levels", data.results);
-      form.setValue("geo_organization", data.results[0].id);
+      form.setValue("_selected_levels", data.results, setFormValueOpts);
+      form.setValue("geo_organization", data.results[0].id, setFormValueOpts);
     },
   });
 
-  if (!form.watch("abha_id")) {
+  const abhaId = form.watch("abha_id");
+
+  if (!abhaId && !abhaNumber) {
     return (
       <div className="abdm-container flex justify-end w-full">
         <LinkAbhaNumber
@@ -104,11 +111,11 @@ const PatientRegistrationForm: FC<WithMeta<PatientRegistrationFormProps>> = ({
           variant="outline"
           className="text-primary border-primary-400"
           onSuccess={(abhaNumber) => {
-            form.setValue("abha", abhaNumber);
+            form.setValue("abha", abhaNumber, setFormValueOpts);
 
-            form.setValue("abha_id", abhaNumber.external_id);
-            form.setValue("abha_number", abhaNumber.abha_number);
-            form.setValue("abha_address", abhaNumber.health_id);
+            form.setValue("abha_id", abhaNumber.external_id, setFormValueOpts);
+            form.setValue("abha_number", abhaNumber.abha_number, setFormValueOpts);
+            form.setValue("abha_address", abhaNumber.health_id, setFormValueOpts);
 
             if (patientId) {
               linkAbhaNumberAndPatientMutation.mutate({
@@ -118,24 +125,35 @@ const PatientRegistrationForm: FC<WithMeta<PatientRegistrationFormProps>> = ({
               return;
             }
 
-            form.setValue("name", abhaNumber.name);
+            form.setValue("name", abhaNumber.name, setFormValueOpts);
             form.setValue(
               "phone_number",
-              "+91" + abhaNumber.mobile?.replace("+91", "")
+              "+91" + abhaNumber.mobile?.replace("+91", ""),
+              setFormValueOpts
             );
-            form.setValue("yob_or_dob", "dob");
-            form.setValue("date_of_birth", abhaNumber.date_of_birth);
-            form.setValue("blood_group", "unknown");
+            form.setValue("age_or_dob", "dob", setFormValueOpts);
+            form.setValue(
+              "date_of_birth",
+              abhaNumber.date_of_birth,
+              setFormValueOpts
+            );
+            form.setValue("blood_group", "unknown", setFormValueOpts);
             form.setValue(
               "gender",
               { M: "male", F: "female", O: "transgender" }[abhaNumber.gender] ??
-                "transgender"
+                "transgender",
+              setFormValueOpts
             );
-            form.setValue("address", abhaNumber.address);
-            form.setValue("permanent_address", abhaNumber.address);
+            form.setValue("address", abhaNumber.address, setFormValueOpts);
+            form.setValue(
+              "permanent_address",
+              abhaNumber.address,
+              setFormValueOpts
+            );
             form.setValue(
               "pincode",
-              abhaNumber.pincode && Number(abhaNumber.pincode)
+              abhaNumber.pincode && Number(abhaNumber.pincode),
+              setFormValueOpts
             );
 
             if (abhaNumber.district) {
@@ -165,12 +183,18 @@ const PatientRegistrationForm: FC<WithMeta<PatientRegistrationFormProps>> = ({
 
       <div className="space-y-1">
         <Label>ABHA Number</Label>
-        <Input value={form.getValues("abha_number")} disabled />
+        <Input
+          value={abhaNumber?.abha_number || form.watch("abha_number") || ""}
+          disabled
+        />
       </div>
 
       <div className="space-y-1">
         <Label>ABHA Address</Label>
-        <Input value={form.getValues("abha_address")} disabled />
+        <Input
+          value={abhaNumber?.health_id || form.watch("abha_address") || ""}
+          disabled
+        />
       </div>
 
       {abhaProfile && <ShowAbhaProfile abhaNumber={abhaProfile} />}
