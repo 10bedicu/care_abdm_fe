@@ -12,12 +12,6 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
           className
         )}
         ref={ref}
-        onClick={(e) => {
-          if (type === "date") {
-            e.currentTarget.showPicker();
-          }
-          onClick?.(e);
-        }}
         onFocus={onFocus}
         onWheel={(e) => {
           e.currentTarget.blur();
