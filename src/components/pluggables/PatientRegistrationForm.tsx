@@ -114,8 +114,16 @@ const PatientRegistrationForm: FC<WithMeta<PatientRegistrationFormProps>> = ({
             form.setValue("abha", abhaNumber, setFormValueOpts);
 
             form.setValue("abha_id", abhaNumber.external_id, setFormValueOpts);
-            form.setValue("abha_number", abhaNumber.abha_number, setFormValueOpts);
-            form.setValue("abha_address", abhaNumber.health_id, setFormValueOpts);
+            form.setValue(
+              "abha_number",
+              abhaNumber.abha_number,
+              setFormValueOpts,
+            );
+            form.setValue(
+              "abha_address",
+              abhaNumber.health_id,
+              setFormValueOpts,
+            );
 
             if (patientId) {
               linkAbhaNumberAndPatientMutation.mutate({
@@ -129,32 +137,31 @@ const PatientRegistrationForm: FC<WithMeta<PatientRegistrationFormProps>> = ({
             form.setValue(
               "phone_number",
               "+91" + abhaNumber.mobile?.replace("+91", ""),
-              setFormValueOpts
+              setFormValueOpts,
             );
             form.setValue("age_or_dob", "dob", setFormValueOpts);
             form.setValue(
               "date_of_birth",
               abhaNumber.date_of_birth,
-              setFormValueOpts
+              setFormValueOpts,
             );
             form.setValue("blood_group", "unknown", setFormValueOpts);
             form.setValue(
               "gender",
               { M: "male", F: "female", O: "transgender" }[abhaNumber.gender] ??
                 "transgender",
-              setFormValueOpts
+              setFormValueOpts,
             );
-            form.setValue("address", abhaNumber.address, setFormValueOpts);
-            form.setValue(
-              "permanent_address",
-              abhaNumber.address,
-              setFormValueOpts
-            );
-            form.setValue(
-              "pincode",
-              abhaNumber.pincode && Number(abhaNumber.pincode),
-              setFormValueOpts
-            );
+            const address = abhaNumber.address?.trim();
+            if (address) {
+              form.setValue("address", address, setFormValueOpts);
+              form.setValue("permanent_address", address, setFormValueOpts);
+            }
+
+            const pincode = abhaNumber.pincode?.trim();
+            if (pincode) {
+              form.setValue("pincode", Number(pincode), setFormValueOpts);
+            }
 
             if (abhaNumber.district) {
               autofillGeoOrganizationMutation.mutate({
