@@ -1,11 +1,35 @@
 {
   "version": "1.0.0",
-  "buildDate": "2025-08-01T07:14:35.569Z",
-  "environment": "production",
-  "timestamp": 1754032475601,
-  "commitHash": "f12c775",
-  "branch": "production",
+  "buildDate": "2026-10-06T22:53:31.285Z",
+  "environment": "unknown",
+  "timestamp": 1791327211326,
+  "commitHash": "d77e05a",
+  "branch": "khavinshankar/feat/scan-and-pay",
   "buildHistory": [
+    {
+      "version": "1.0.0",
+      "buildDate": "2026-10-06T22:53:31.285Z",
+      "environment": "unknown",
+      "timestamp": 1791327211326,
+      "commitHash": "d77e05a",
+      "branch": "khavinshankar/feat/scan-and-pay"
+    },
+    {
+      "version": "1.0.0",
+      "buildDate": "2026-10-06T12:59:47.778Z",
+      "environment": "unknown",
+      "timestamp": 1791291587823,
+      "commitHash": "d77e05a",
+      "branch": "develop"
+    },
+    {
+      "version": "1.0.0",
+      "buildDate": "2026-10-06T12:10:31.183Z",
+      "environment": "unknown",
+      "timestamp": 1791288631225,
+      "commitHash": "d77e05a",
+      "branch": "develop"
+    },
     {
       "version": "1.0.0",
       "buildDate": "2025-08-01T07:14:35.569Z",
