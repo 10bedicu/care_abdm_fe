@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { I18NNAMESPACE } from "@/lib/constants";
+import { useScanPayManualActions } from "@/lib/pluginConfig";
 import dayjs from "@/lib/dayjs";
 import { cn } from "@/lib/utils";
 import { PaymentOrder, PaymentOrderStatus } from "@/types/paymentOrder";
@@ -99,6 +100,7 @@ const ScanPayOrders: FC<ScanPayOrdersProps> = ({ facilityId }) => {
   });
 
   const { checkStatus, cancel, markPaid } = useScanPayOrderActions();
+  const manualActions = useScanPayManualActions();
 
   const orders = data?.results ?? [];
   const count = data?.count ?? 0;
@@ -251,21 +253,25 @@ const ScanPayOrders: FC<ScanPayOrdersProps> = ({ facilityId }) => {
                           >
                             {t("scan_pay__check_status")}
                           </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => setMarkingPaid(order)}
-                          >
-                            {t("scan_pay__mark_paid")}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="text-red-600 hover:text-red-700"
-                            onClick={() => setCancelling(order)}
-                          >
-                            {t("scan_pay__cancel_order")}
-                          </Button>
+                          {manualActions.markPaid && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => setMarkingPaid(order)}
+                            >
+                              {t("scan_pay__mark_paid")}
+                            </Button>
+                          )}
+                          {manualActions.cancelOrder && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-red-600 hover:text-red-700"
+                              onClick={() => setCancelling(order)}
+                            >
+                              {t("scan_pay__cancel_order")}
+                            </Button>
+                          )}
                         </>
                       )}
                       {order.receipt_url && (

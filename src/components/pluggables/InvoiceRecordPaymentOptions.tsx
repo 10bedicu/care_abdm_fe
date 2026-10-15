@@ -11,6 +11,7 @@ import {
 } from "@/components/scan-pay/ScanPayOrderActions";
 import { Button } from "@/components/ui/button";
 import { I18NNAMESPACE } from "@/lib/constants";
+import { useScanPayManualActions } from "@/lib/pluginConfig";
 import { cn } from "@/lib/utils";
 import { WithMeta } from "@/types/meta";
 import { PaymentOrder } from "@/types/paymentOrder";
@@ -27,8 +28,9 @@ const itemClassName =
 
 const InvoiceRecordPaymentOptions: FC<
   WithMeta<InvoiceRecordPaymentOptionsProps>
-> = ({ facilityId, invoice, className }) => {
+> = ({ facilityId, invoice, className, __meta }) => {
   const { t } = useTranslation(I18NNAMESPACE);
+  const manualActions = useScanPayManualActions(__meta?.config);
   const [cancelling, setCancelling] = useState<PaymentOrder | null>(null);
   const [markingPaid, setMarkingPaid] = useState<PaymentOrder | null>(null);
 
@@ -62,22 +64,26 @@ const InvoiceRecordPaymentOptions: FC<
       >
         {t("scan_pay__check_status_menu")}
       </Button>
-      <Button
-        variant="ghost"
-        size="sm"
-        className={itemClassName}
-        onClick={() => setMarkingPaid(order)}
-      >
-        {t("scan_pay__mark_paid_menu")}
-      </Button>
-      <Button
-        variant="ghost"
-        size="sm"
-        className={cn(itemClassName, "text-red-600 hover:text-red-700")}
-        onClick={() => setCancelling(order)}
-      >
-        {t("scan_pay__cancel_order_menu")}
-      </Button>
+      {manualActions.markPaid && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className={itemClassName}
+          onClick={() => setMarkingPaid(order)}
+        >
+          {t("scan_pay__mark_paid_menu")}
+        </Button>
+      )}
+      {manualActions.cancelOrder && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className={cn(itemClassName, "text-red-600 hover:text-red-700")}
+          onClick={() => setCancelling(order)}
+        >
+          {t("scan_pay__cancel_order_menu")}
+        </Button>
+      )}
 
       <CancelOrderDialog
         order={cancelling}

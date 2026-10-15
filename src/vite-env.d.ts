@@ -8,6 +8,8 @@ interface CareAbdmFePluginConfig {
   faceAuthUrl?: string;
   enforceAbhaNumberLinking?: boolean;
   scanAndShareUrl?: string;
+  enableScanPayMarkPaid?: boolean;
+  enableScanPayCancelOrder?: boolean;
 }
 
 interface CarePluginRuntimeMeta {
