@@ -258,7 +258,7 @@ const ScanPayOrders: FC<ScanPayOrdersProps> = ({ facilityId }) => {
         <p className="text-sm text-gray-600">{t("scan_pay__description")}</p>
       </div>
 
-      <div className="flex min-w-0 flex-col gap-3">
+      <div className="flex min-w-0 flex-col gap-3 xl:flex-row xl:items-center">
         <div className="md:hidden">
           <Select value={tab} onValueChange={(value) => setTab(value as Tab)}>
             <SelectTrigger aria-label={t("status")} className="w-full">
@@ -276,7 +276,7 @@ const ScanPayOrders: FC<ScanPayOrdersProps> = ({ facilityId }) => {
         <Tabs
           value={tab}
           onValueChange={(value) => setTab(value as Tab)}
-          className="hidden md:block"
+          className="hidden shrink-0 md:block"
         >
           <TabsList className="h-9 w-max justify-start">
             {FILTERS.map((filter) => (
@@ -286,19 +286,19 @@ const ScanPayOrders: FC<ScanPayOrdersProps> = ({ facilityId }) => {
             ))}
           </TabsList>
         </Tabs>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <div className="flex min-w-0 flex-col gap-2 sm:ml-auto sm:flex-row sm:items-center sm:justify-end">
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t("scan_pay__search")}
-            className="w-full sm:max-w-sm"
+            className="w-full min-w-0 sm:w-[28rem] sm:max-w-md"
           />
-          <div className="flex gap-2">
+          <div className="flex gap-2 sm:shrink-0">
             <DatePickerWithRange
               value={dateRange}
               onChange={setDateRange}
               placeholder={t("scan_pay__date_range")}
-              className="min-w-0 flex-1 sm:w-44 sm:flex-none"
+              className="min-w-0 flex-1 sm:w-56"
             />
             <Button
               variant="outline"
