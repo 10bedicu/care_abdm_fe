@@ -1,6 +1,6 @@
 import { FC, useEffect, useMemo, useState } from "react";
-import { ExternalLinkIcon, RefreshCwIcon } from "lucide-react";
-import { Link } from "raviger";
+import { ExternalLinkIcon, InfoIcon, RefreshCwIcon } from "lucide-react";
+import { Link, useQueryParams } from "raviger";
 import { DateRange } from "react-day-picker";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -19,6 +19,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { DatePickerWithRange } from "@/components/ui/date-range-picker";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   Select,
   SelectContent,
@@ -35,6 +43,20 @@ import { cn } from "@/lib/utils";
 import { PaymentOrder, PaymentOrderStatus } from "@/types/paymentOrder";
 
 const PAGE_SIZE = 15;
+const DEFAULT_REFRESH_INTERVAL_MS = 10_000;
+
+const booleanFromString = (value: string | undefined, fallback = false) => {
+  if (value === "true") return true;
+  if (value === "false") return false;
+  return fallback;
+};
+
+const refreshIntervalMs = () => {
+  const interval = window.__CORE_ENV__?.appointmentAndQueueRefreshInterval;
+  return typeof interval === "number" && interval > 0
+    ? interval
+    : DEFAULT_REFRESH_INTERVAL_MS;
+};
 
 type Tab = "all" | "pending" | "paid" | "failed" | "expired" | "cancelled";
 
@@ -184,6 +206,7 @@ const OrderActions = ({
 
 const ScanPayOrders: FC<ScanPayOrdersProps> = ({ facilityId }) => {
   const { t } = useTranslation(I18NNAMESPACE);
+  const [qParams, setQueryParams] = useQueryParams<{ autoRefresh?: string }>();
   const [tab, setTab] = useState<Tab>("pending");
   const [search, setSearch] = useState("");
   const [dateRange, setDateRange] = useState<DateRange>();
@@ -191,6 +214,13 @@ const ScanPayOrders: FC<ScanPayOrdersProps> = ({ facilityId }) => {
   const [cancelling, setCancelling] = useState<PaymentOrder | null>(null);
   const [markingPaid, setMarkingPaid] = useState<PaymentOrder | null>(null);
   const [checkingId, setCheckingId] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const shouldAutoRefresh = booleanFromString(
+    qParams.autoRefresh,
+    window.__CORE_ENV__?.enableAutoRefresh === true,
+  );
+  const pollIntervalMs = refreshIntervalMs();
 
   const debouncedSearch = useDebounced(search.trim());
 
@@ -216,11 +246,21 @@ const ScanPayOrders: FC<ScanPayOrdersProps> = ({ facilityId }) => {
     [facilityId, tab, debouncedSearch, dateRange, page]
   );
 
-  const { data, isLoading, isFetching, refetch } = useQuery({
+  const { data, isLoading, refetch } = useQuery({
     queryKey: [SCAN_PAY_ORDERS_QUERY_KEY, query],
     queryFn: () => apis.scanPay.orders.list(query),
     enabled: !!facilityId,
+    refetchInterval: shouldAutoRefresh ? pollIntervalMs : false,
   });
+
+  const refresh = async () => {
+    setRefreshing(true);
+    try {
+      await refetch();
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const { checkStatus, cancel, markPaid } = useScanPayOrderActions();
   const manualActions = useScanPayManualActions();
@@ -251,11 +291,42 @@ const ScanPayOrders: FC<ScanPayOrdersProps> = ({ facilityId }) => {
 
   return (
     <div className="abdm-container flex flex-col gap-4">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-xl font-semibold text-gray-900">
-          {t("scan_pay__title")}
-        </h1>
-        <p className="text-sm text-gray-600">{t("scan_pay__description")}</p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 flex-col gap-1">
+          <h1 className="text-xl font-semibold text-gray-900">
+            {t("scan_pay__title")}
+          </h1>
+          <p className="text-sm text-gray-600">{t("scan_pay__description")}</p>
+        </div>
+        <div className="flex shrink-0 items-center gap-2 self-end sm:self-auto">
+          <Label htmlFor="scan-pay-auto-refresh" className="whitespace-nowrap">
+            {t("scan_pay__auto_refresh")}
+          </Label>
+          <Switch
+            id="scan-pay-auto-refresh"
+            checked={shouldAutoRefresh}
+            onCheckedChange={(checked) =>
+              setQueryParams(
+                { autoRefresh: checked ? "true" : "false" },
+                { replace: true, overwrite: false },
+              )
+            }
+          />
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="hidden cursor-help text-gray-500 md:inline-flex">
+                  <InfoIcon className="size-4" />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                {t("scan_pay__auto_refresh_tooltip", {
+                  interval: Math.round(pollIntervalMs / 1000),
+                })}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
       </div>
 
       <div className="flex min-w-0 flex-col gap-3 xl:flex-row xl:items-center">
@@ -304,10 +375,10 @@ const ScanPayOrders: FC<ScanPayOrdersProps> = ({ facilityId }) => {
               variant="outline"
               size="icon"
               className="shrink-0"
-              onClick={() => refetch()}
+              onClick={() => void refresh()}
               aria-label={t("scan_pay__refresh")}
             >
-              <RefreshCwIcon className={cn(isFetching && "animate-spin")} />
+              <RefreshCwIcon className={cn(refreshing && "animate-spin")} />
             </Button>
           </div>
         </div>

@@ -179,6 +179,8 @@
   "scan_pay__search": "Search by order, ATRN, or invoice number",
   "scan_pay__date_range": "Created between",
   "scan_pay__refresh": "Refresh",
+  "scan_pay__auto_refresh": "Auto refresh",
+  "scan_pay__auto_refresh_tooltip": "Automatically refreshes every {{interval}} seconds. Disable to pause live updates.",
   "scan_pay__col_created": "Created",
   "scan_pay__col_patient": "Patient",
   "scan_pay__col_invoice": "Invoice",
