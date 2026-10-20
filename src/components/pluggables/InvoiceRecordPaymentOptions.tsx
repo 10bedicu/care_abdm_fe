@@ -30,7 +30,7 @@ const InvoiceRecordPaymentOptions: FC<
   WithMeta<InvoiceRecordPaymentOptionsProps>
 > = ({ facilityId, invoice, className, __meta }) => {
   const { t } = useTranslation(I18NNAMESPACE);
-  const manualActions = useScanPayManualActions(__meta?.config);
+  const manualActions = useScanPayManualActions(facilityId, __meta?.config);
   const [cancelling, setCancelling] = useState<PaymentOrder | null>(null);
   const [markingPaid, setMarkingPaid] = useState<PaymentOrder | null>(null);
 

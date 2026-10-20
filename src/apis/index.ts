@@ -79,6 +79,14 @@ export const apis = {
     },
   },
 
+  facility: {
+    get: async (facilityId: string) => {
+      return await request<{ permissions?: string[] }>(
+        `/api/v1/facility/${facilityId}/`
+      );
+    },
+  },
+
   healthFacility: {
     list: async () => {
       return await request<PaginatedResponse<HealthFacility>>(

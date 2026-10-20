@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 
 import { apis } from "@/apis";
+import { APIError } from "@/apis/request";
 import {
   CancelOrderDialog,
   MarkPaidDialog,
@@ -256,7 +257,7 @@ const ScanPayOrders: FC<ScanPayOrdersProps> = ({ facilityId }) => {
     [facilityId, tab, debouncedSearch, dateRange, page]
   );
 
-  const { data, isLoading, refetch } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: [SCAN_PAY_ORDERS_QUERY_KEY, query],
     queryFn: () => apis.scanPay.orders.list(query),
     enabled: !!facilityId,
@@ -273,7 +274,7 @@ const ScanPayOrders: FC<ScanPayOrdersProps> = ({ facilityId }) => {
   };
 
   const { checkStatus, cancel, markPaid } = useScanPayOrderActions();
-  const manualActions = useScanPayManualActions();
+  const manualActions = useScanPayManualActions(facilityId);
 
   const orders = data?.results ?? [];
   const count = data?.count ?? 0;
@@ -298,6 +299,17 @@ const ScanPayOrders: FC<ScanPayOrdersProps> = ({ facilityId }) => {
       onCancel={() => setCancelling(order)}
     />
   );
+
+  if (isError && error instanceof APIError && error.status === 403) {
+    return (
+      <div className="abdm-container flex flex-col gap-2">
+        <h1 className="text-xl font-semibold text-gray-900">
+          {t("scan_pay__title")}
+        </h1>
+        <p className="text-sm text-gray-600">{t("scan_pay__forbidden")}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="abdm-container flex flex-col gap-4">

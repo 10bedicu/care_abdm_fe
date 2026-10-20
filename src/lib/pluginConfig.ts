@@ -1,6 +1,10 @@
+import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
+import { apis } from "@/apis";
 import type { MetaConfig } from "@/types/meta";
+
+const CAN_UPDATE_ACCOUNT = "can_update_account";
 
 const runtimeConfig = () =>
   window.__CARE_PLUGIN_RUNTIME__?.meta?.care_abdm_fe?.config;
@@ -14,7 +18,7 @@ const flagEnabled = (
 };
 
 /**
- * Each action stays hidden until its own plugin-config flag is true.
+ * Each flag stays off until its plugin-config value is true.
  * Pluggable screens pass `__meta.config`; route pages fall back to the runtime.
  */
 export const scanPayManualActions = (config?: MetaConfig) => ({
@@ -22,16 +26,29 @@ export const scanPayManualActions = (config?: MetaConfig) => ({
   cancelOrder: flagEnabled(config, "enableScanPayCancelOrder"),
 });
 
-export const useScanPayManualActions = (config?: MetaConfig) => {
-  const [actions, setActions] = useState(() => scanPayManualActions(config));
+export const useScanPayManualActions = (
+  facilityId?: string,
+  config?: MetaConfig,
+) => {
+  const [flags, setFlags] = useState(() => scanPayManualActions(config));
+  const { data: facility } = useQuery({
+    queryKey: ["facility", facilityId],
+    queryFn: () => apis.facility.get(facilityId!),
+    enabled: !!facilityId,
+  });
+  const canUpdateAccount =
+    facility?.permissions?.includes(CAN_UPDATE_ACCOUNT) ?? false;
 
   useEffect(() => {
-    const read = () => setActions(scanPayManualActions(config));
+    const read = () => setFlags(scanPayManualActions(config));
     read();
     // The host assigns the runtime after the first paint.
     const id = window.setTimeout(read, 0);
     return () => window.clearTimeout(id);
   }, [config]);
 
-  return actions;
+  return {
+    markPaid: flags.markPaid && canUpdateAccount,
+    cancelOrder: flags.cancelOrder && canUpdateAccount,
+  };
 };

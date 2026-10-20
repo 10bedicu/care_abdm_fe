@@ -190,6 +190,7 @@
   "scan_pay__order_number": "Order",
   "scan_pay__atrn": "ATRN",
   "scan_pay__no_orders": "No scan & pay orders found",
+  "scan_pay__forbidden": "You do not have permission to view scan and pay orders for this facility.",
   "scan_pay__total_orders_one": "{{count}} order",
   "scan_pay__total_orders_other": "{{count}} orders",
   "scan_pay__previous": "Previous",
