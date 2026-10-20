@@ -13,6 +13,7 @@ const STATUS_CLASSES: Record<PaymentOrderStatus, string> = {
   [PaymentOrderStatus.SUCCESS]: "bg-green-100 text-green-800",
   [PaymentOrderStatus.CANCELED]: "bg-gray-200 text-gray-800",
   [PaymentOrderStatus.FAIL]: "bg-red-100 text-red-800",
+  [PaymentOrderStatus.EXPIRED]: "bg-amber-100 text-amber-800",
   [PaymentOrderStatus.REFUND_INITIATED]: "bg-orange-100 text-orange-800",
   [PaymentOrderStatus.REFUND_SUCCESS]: "bg-orange-100 text-orange-800",
 };

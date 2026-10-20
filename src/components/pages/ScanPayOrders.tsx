@@ -29,7 +29,7 @@ import { PaymentOrder, PaymentOrderStatus } from "@/types/paymentOrder";
 
 const PAGE_SIZE = 15;
 
-type Tab = "all" | "pending" | "paid" | "closed";
+type Tab = "all" | "pending" | "paid" | "failed" | "expired" | "cancelled";
 
 const TAB_FILTERS: Record<Tab, { pending?: boolean; status?: string }> = {
   all: {},
@@ -41,9 +41,9 @@ const TAB_FILTERS: Record<Tab, { pending?: boolean; status?: string }> = {
       PaymentOrderStatus.REFUND_SUCCESS,
     ].join(","),
   },
-  closed: {
-    status: [PaymentOrderStatus.FAIL, PaymentOrderStatus.CANCELED].join(","),
-  },
+  failed: { status: PaymentOrderStatus.FAIL },
+  expired: { status: PaymentOrderStatus.EXPIRED },
+  cancelled: { status: PaymentOrderStatus.CANCELED },
 };
 
 const useDebounced = <T,>(value: T, delay = 400) => {
@@ -61,7 +61,7 @@ type ScanPayOrdersProps = {
 
 const ScanPayOrders: FC<ScanPayOrdersProps> = ({ facilityId }) => {
   const { t } = useTranslation(I18NNAMESPACE);
-  const [tab, setTab] = useState<Tab>("all");
+  const [tab, setTab] = useState<Tab>("pending");
   const [search, setSearch] = useState("");
   const [dateRange, setDateRange] = useState<DateRange>();
   const [page, setPage] = useState(0);
@@ -122,14 +122,20 @@ const ScanPayOrders: FC<ScanPayOrdersProps> = ({ facilityId }) => {
 
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <Tabs value={tab} onValueChange={(value) => setTab(value as Tab)}>
-          <TabsList>
+          <TabsList className="h-auto flex-wrap justify-start">
             <TabsTrigger value="all">{t("scan_pay__filter_all")}</TabsTrigger>
             <TabsTrigger value="pending">
               {t("scan_pay__filter_pending")}
             </TabsTrigger>
             <TabsTrigger value="paid">{t("scan_pay__filter_paid")}</TabsTrigger>
-            <TabsTrigger value="closed">
-              {t("scan_pay__filter_closed")}
+            <TabsTrigger value="failed">
+              {t("scan_pay__filter_failed")}
+            </TabsTrigger>
+            <TabsTrigger value="expired">
+              {t("scan_pay__filter_expired")}
+            </TabsTrigger>
+            <TabsTrigger value="cancelled">
+              {t("scan_pay__filter_cancelled")}
             </TabsTrigger>
           </TabsList>
         </Tabs>
