@@ -22,6 +22,7 @@ export type PaymentOrderInvoice = {
   title: string | null;
   status: string;
   total_gross: string;
+  cancelled_reason: string | null;
 };
 
 export type PaymentOrder = {

@@ -106,16 +106,21 @@ const OrderReferences = ({
 }) => {
   const { t } = useTranslation(I18NNAMESPACE);
   const invoice = order.invoice;
-  const href = invoice
+  const href = invoice?.id
     ? `/facility/${facilityId}/billing/invoices/${invoice.id}`
     : undefined;
+  const invoiceLabel =
+    invoice?.number?.trim() ||
+    invoice?.title?.trim() ||
+    (invoice?.id ? invoice.id.slice(0, 8) : "") ||
+    t("scan_pay__col_invoice");
   const rows = [
     {
       label: t("scan_pay__col_invoice"),
       value:
         invoice && href ? (
           <Link href={href} className="font-medium text-primary-700 hover:underline">
-            {invoice.number ?? invoice.id.slice(0, 8)}
+            {invoiceLabel}
           </Link>
         ) : (
           "—"
@@ -130,7 +135,12 @@ const OrderReferences = ({
       {rows.map((row) => (
         <div key={row.label} className="grid grid-cols-[4.5rem_minmax(0,1fr)] gap-2">
           <dt className="text-gray-500">{row.label}</dt>
-          <dd className="truncate text-gray-800">{row.value}</dd>
+          <dd
+            className="break-words text-gray-800"
+            title={typeof row.value === "string" ? row.value : undefined}
+          >
+            {row.value}
+          </dd>
         </div>
       ))}
     </dl>
@@ -413,7 +423,10 @@ const ScanPayOrders: FC<ScanPayOrdersProps> = ({ facilityId }) => {
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
-              <ScanPayStatusBadge status={order.status} />
+              <ScanPayStatusBadge
+                status={order.status}
+                reason={order.invoice?.cancelled_reason}
+              />
               <span>{dayjs(order.created_date).format("DD MMM YYYY, hh:mm A")}</span>
               {order.provider && <span>{order.provider}</span>}
             </div>
@@ -477,7 +490,10 @@ const ScanPayOrders: FC<ScanPayOrdersProps> = ({ facilityId }) => {
                   {amountOf(order)}
                 </td>
                 <td className="px-4 py-3">
-                  <ScanPayStatusBadge status={order.status} />
+                  <ScanPayStatusBadge
+                    status={order.status}
+                    reason={order.invoice?.cancelled_reason}
+                  />
                 </td>
                 <td className="px-4 py-3">{actionsFor(order)}</td>
               </tr>

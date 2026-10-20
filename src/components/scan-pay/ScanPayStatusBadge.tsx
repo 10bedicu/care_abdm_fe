@@ -2,6 +2,12 @@ import { FC } from "react";
 import { useTranslation } from "react-i18next";
 
 import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { I18NNAMESPACE } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { PaymentOrderStatus } from "@/types/paymentOrder";
@@ -20,16 +26,17 @@ const STATUS_CLASSES: Record<PaymentOrderStatus, string> = {
 
 type ScanPayStatusBadgeProps = {
   status: PaymentOrderStatus;
+  reason?: string | null;
   className?: string;
 };
 
 export const ScanPayStatusBadge: FC<ScanPayStatusBadgeProps> = ({
   status,
+  reason,
   className,
 }) => {
   const { t } = useTranslation(I18NNAMESPACE);
-
-  return (
+  const badge = (
     <Badge
       variant="outline"
       className={cn(
@@ -40,6 +47,16 @@ export const ScanPayStatusBadge: FC<ScanPayStatusBadgeProps> = ({
     >
       {t(`scan_pay__status__${status}`)}
     </Badge>
+  );
+  if (!reason) return badge;
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>{badge}</TooltipTrigger>
+        <TooltipContent className="max-w-xs">{reason}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 };
 
