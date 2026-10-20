@@ -117,7 +117,7 @@ export const CancelOrderDialog: FC<OrderDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="abdm-container">
+      <DialogContent className="abdm-container max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t("scan_pay__cancel_title")}</DialogTitle>
           <DialogDescription>
@@ -179,7 +179,7 @@ export const MarkPaidDialog: FC<MarkPaidDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={close}>
-      <DialogContent className="abdm-container">
+      <DialogContent className="abdm-container max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t("scan_pay__mark_paid_title")}</DialogTitle>
           <DialogDescription>

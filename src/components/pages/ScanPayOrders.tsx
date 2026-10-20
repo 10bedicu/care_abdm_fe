@@ -19,6 +19,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { DatePickerWithRange } from "@/components/ui/date-range-picker";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { I18NNAMESPACE } from "@/lib/constants";
@@ -30,6 +37,15 @@ import { PaymentOrder, PaymentOrderStatus } from "@/types/paymentOrder";
 const PAGE_SIZE = 15;
 
 type Tab = "all" | "pending" | "paid" | "failed" | "expired" | "cancelled";
+
+const FILTERS: { value: Tab; label: string }[] = [
+  { value: "all", label: "scan_pay__filter_all" },
+  { value: "pending", label: "scan_pay__filter_pending" },
+  { value: "paid", label: "scan_pay__filter_paid" },
+  { value: "failed", label: "scan_pay__filter_failed" },
+  { value: "expired", label: "scan_pay__filter_expired" },
+  { value: "cancelled", label: "scan_pay__filter_cancelled" },
+];
 
 const TAB_FILTERS: Record<Tab, { pending?: boolean; status?: string }> = {
   all: {},
@@ -59,6 +75,113 @@ type ScanPayOrdersProps = {
   facilityId: string;
 };
 
+const OrderReferences = ({
+  order,
+  facilityId,
+}: {
+  order: PaymentOrder;
+  facilityId: string;
+}) => {
+  const { t } = useTranslation(I18NNAMESPACE);
+  const invoice = order.invoice;
+  const href = invoice
+    ? `/facility/${facilityId}/billing/invoices/${invoice.id}`
+    : undefined;
+  const rows = [
+    {
+      label: t("scan_pay__col_invoice"),
+      value:
+        invoice && href ? (
+          <Link href={href} className="font-medium text-primary-700 hover:underline">
+            {invoice.number ?? invoice.id.slice(0, 8)}
+          </Link>
+        ) : (
+          "—"
+        ),
+    },
+    { label: t("scan_pay__order_number"), value: order.order_number || "—" },
+    { label: t("scan_pay__atrn"), value: order.transaction_id || "—" },
+  ];
+
+  return (
+    <dl className="grid gap-1 text-xs">
+      {rows.map((row) => (
+        <div key={row.label} className="grid grid-cols-[4.5rem_minmax(0,1fr)] gap-2">
+          <dt className="text-gray-500">{row.label}</dt>
+          <dd className="truncate text-gray-800">{row.value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+};
+
+const OrderActions = ({
+  order,
+  checking,
+  onCheck,
+  onMarkPaid,
+  onCancel,
+  markPaid,
+  cancelOrder,
+}: {
+  order: PaymentOrder;
+  checking: boolean;
+  onCheck: () => void;
+  onMarkPaid: () => void;
+  onCancel: () => void;
+  markPaid: boolean;
+  cancelOrder: boolean;
+}) => {
+  const { t } = useTranslation(I18NNAMESPACE);
+  if (!order.is_pending && !order.receipt_url) return null;
+
+  return (
+    <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
+      {order.is_pending && (
+        <>
+          <Button
+            size="sm"
+            variant="outline"
+            className="w-full sm:w-auto"
+            loading={checking}
+            onClick={onCheck}
+          >
+            {t("scan_pay__check_status")}
+          </Button>
+          {markPaid && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="w-full sm:w-auto"
+              onClick={onMarkPaid}
+            >
+              {t("scan_pay__mark_paid")}
+            </Button>
+          )}
+          {cancelOrder && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="w-full text-red-600 hover:text-red-700 sm:w-auto"
+              onClick={onCancel}
+            >
+              {t("scan_pay__cancel_order")}
+            </Button>
+          )}
+        </>
+      )}
+      {order.receipt_url && (
+        <Button size="sm" variant="outline" className="w-full sm:w-auto" asChild>
+          <a href={order.receipt_url} target="_blank" rel="noreferrer">
+            <ExternalLinkIcon />
+            {t("scan_pay__receipt")}
+          </a>
+        </Button>
+      )}
+    </div>
+  );
+};
+
 const ScanPayOrders: FC<ScanPayOrdersProps> = ({ facilityId }) => {
   const { t } = useTranslation(I18NNAMESPACE);
   const [tab, setTab] = useState<Tab>("pending");
@@ -79,7 +202,7 @@ const ScanPayOrders: FC<ScanPayOrdersProps> = ({ facilityId }) => {
     () => ({
       facility: facilityId,
       ...TAB_FILTERS[tab],
-      invoice_number: debouncedSearch || undefined,
+      search: debouncedSearch || undefined,
       created_date_after: dateRange?.from
         ? dayjs(dateRange.from).startOf("day").toISOString()
         : undefined,
@@ -106,10 +229,25 @@ const ScanPayOrders: FC<ScanPayOrdersProps> = ({ facilityId }) => {
   const count = data?.count ?? 0;
   const pageCount = Math.max(1, Math.ceil(count / PAGE_SIZE));
 
-  const invoicePath = (order: PaymentOrder) =>
-    order.invoice
-      ? `/facility/${facilityId}/billing/invoices/${order.invoice.id}`
-      : undefined;
+  const amountOf = (order: PaymentOrder) =>
+    order.amount || order.invoice
+      ? formatAmount(order.amount ?? order.invoice?.total_gross)
+      : "—";
+
+  const actionsFor = (order: PaymentOrder) => (
+    <OrderActions
+      order={order}
+      checking={checkStatus.isPending && checkingId === order.id}
+      markPaid={manualActions.markPaid}
+      cancelOrder={manualActions.cancelOrder}
+      onCheck={() => {
+        setCheckingId(order.id);
+        checkStatus.mutate(order);
+      }}
+      onMarkPaid={() => setMarkingPaid(order)}
+      onCancel={() => setCancelling(order)}
+    />
+  );
 
   return (
     <div className="abdm-container flex flex-col gap-4">
@@ -120,49 +258,101 @@ const ScanPayOrders: FC<ScanPayOrdersProps> = ({ facilityId }) => {
         <p className="text-sm text-gray-600">{t("scan_pay__description")}</p>
       </div>
 
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <Tabs value={tab} onValueChange={(value) => setTab(value as Tab)}>
-          <TabsList className="h-auto flex-wrap justify-start">
-            <TabsTrigger value="all">{t("scan_pay__filter_all")}</TabsTrigger>
-            <TabsTrigger value="pending">
-              {t("scan_pay__filter_pending")}
-            </TabsTrigger>
-            <TabsTrigger value="paid">{t("scan_pay__filter_paid")}</TabsTrigger>
-            <TabsTrigger value="failed">
-              {t("scan_pay__filter_failed")}
-            </TabsTrigger>
-            <TabsTrigger value="expired">
-              {t("scan_pay__filter_expired")}
-            </TabsTrigger>
-            <TabsTrigger value="cancelled">
-              {t("scan_pay__filter_cancelled")}
-            </TabsTrigger>
+      <div className="flex min-w-0 flex-col gap-3">
+        <div className="md:hidden">
+          <Select value={tab} onValueChange={(value) => setTab(value as Tab)}>
+            <SelectTrigger aria-label={t("status")} className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {FILTERS.map((filter) => (
+                <SelectItem key={filter.value} value={filter.value}>
+                  {t(filter.label)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <Tabs
+          value={tab}
+          onValueChange={(value) => setTab(value as Tab)}
+          className="hidden md:block"
+        >
+          <TabsList className="h-9 w-max justify-start">
+            {FILTERS.map((filter) => (
+              <TabsTrigger key={filter.value} value={filter.value}>
+                {t(filter.label)}
+              </TabsTrigger>
+            ))}
           </TabsList>
         </Tabs>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder={t("scan_pay__search_invoice")}
-            className="sm:w-56"
+            placeholder={t("scan_pay__search")}
+            className="w-full sm:max-w-sm"
           />
-          <DatePickerWithRange
-            value={dateRange}
-            onChange={setDateRange}
-            placeholder={t("scan_pay__date_range")}
-          />
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => refetch()}
-            aria-label={t("scan_pay__refresh")}
-          >
-            <RefreshCwIcon className={cn(isFetching && "animate-spin")} />
-          </Button>
+          <div className="flex gap-2">
+            <DatePickerWithRange
+              value={dateRange}
+              onChange={setDateRange}
+              placeholder={t("scan_pay__date_range")}
+              className="min-w-0 flex-1 sm:w-44 sm:flex-none"
+            />
+            <Button
+              variant="outline"
+              size="icon"
+              className="shrink-0"
+              onClick={() => refetch()}
+              aria-label={t("scan_pay__refresh")}
+            >
+              <RefreshCwIcon className={cn(isFetching && "animate-spin")} />
+            </Button>
+          </div>
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
+      <div className="flex flex-col gap-3 md:hidden">
+        {isLoading &&
+          Array.from({ length: 3 }).map((_, index) => (
+            <Skeleton key={index} className="h-36 w-full rounded-lg" />
+          ))}
+        {!isLoading && orders.length === 0 && (
+          <div className="rounded-lg border border-gray-200 bg-white px-4 py-10 text-center text-sm text-gray-500">
+            {t("scan_pay__no_orders")}
+          </div>
+        )}
+        {orders.map((order) => (
+          <article
+            key={order.id}
+            className="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-4"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="truncate font-medium text-gray-900">
+                  {order.patient?.name ?? "—"}
+                </div>
+                <div className="truncate text-xs text-gray-500">
+                  {order.abha_address}
+                </div>
+              </div>
+              <div className="shrink-0 text-right font-medium text-gray-900">
+                {amountOf(order)}
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
+              <ScanPayStatusBadge status={order.status} />
+              <span>{dayjs(order.created_date).format("DD MMM YYYY, hh:mm A")}</span>
+              {order.provider && <span>{order.provider}</span>}
+            </div>
+            <OrderReferences order={order} facilityId={facilityId} />
+            {actionsFor(order)}
+          </article>
+        ))}
+      </div>
+
+      <div className="hidden overflow-x-auto rounded-lg border border-gray-200 bg-white md:block">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 text-left text-xs font-medium uppercase tracking-wide text-gray-500">
             <tr>
@@ -170,7 +360,6 @@ const ScanPayOrders: FC<ScanPayOrdersProps> = ({ facilityId }) => {
               <th className="px-4 py-3">{t("scan_pay__col_patient")}</th>
               <th className="px-4 py-3">{t("scan_pay__col_invoice")}</th>
               <th className="px-4 py-3 text-right">{t("scan_pay__col_amount")}</th>
-              <th className="px-4 py-3">{t("scan_pay__col_provider")}</th>
               <th className="px-4 py-3">{t("status")}</th>
               <th className="px-4 py-3 text-right">{t("scan_pay__col_actions")}</th>
             </tr>
@@ -179,7 +368,7 @@ const ScanPayOrders: FC<ScanPayOrdersProps> = ({ facilityId }) => {
             {isLoading &&
               Array.from({ length: 5 }).map((_, index) => (
                 <tr key={index}>
-                  {Array.from({ length: 7 }).map((_, cell) => (
+                  {Array.from({ length: 6 }).map((_, cell) => (
                     <td key={cell} className="px-4 py-3">
                       <Skeleton className="h-4 w-full" />
                     </td>
@@ -188,122 +377,47 @@ const ScanPayOrders: FC<ScanPayOrdersProps> = ({ facilityId }) => {
               ))}
             {!isLoading && orders.length === 0 && (
               <tr>
-                <td
-                  colSpan={7}
-                  className="px-4 py-10 text-center text-gray-500"
-                >
+                <td colSpan={6} className="px-4 py-10 text-center text-gray-500">
                   {t("scan_pay__no_orders")}
                 </td>
               </tr>
             )}
-            {orders.map((order) => {
-              const href = invoicePath(order);
-              const isChecking =
-                checkStatus.isPending && checkingId === order.id;
-              return (
-                <tr key={order.id} className="align-top">
-                  <td className="whitespace-nowrap px-4 py-3 text-gray-700">
-                    <div>{dayjs(order.created_date).format("DD MMM YYYY")}</div>
-                    <div className="text-xs text-gray-500">
-                      {dayjs(order.created_date).format("hh:mm A")}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="font-medium text-gray-900">
-                      {order.patient?.name ?? "—"}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      {order.abha_address}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    {order.invoice && href ? (
-                      <Link
-                        href={href}
-                        className="font-medium text-primary-700 hover:underline"
-                      >
-                        {order.invoice.number ?? order.invoice.id.slice(0, 8)}
-                      </Link>
-                    ) : (
-                      <span className="text-gray-400">—</span>
-                    )}
-                    {order.order_number && (
-                      <div className="text-xs text-gray-500">
-                        {t("scan_pay__order_number")}: {order.order_number}
-                      </div>
-                    )}
-                  </td>
-                  <td className="whitespace-nowrap px-4 py-3 text-right font-medium text-gray-900">
-                    {order.amount || order.invoice
-                      ? formatAmount(order.amount ?? order.invoice?.total_gross)
-                      : "—"}
-                  </td>
-                  <td className="px-4 py-3 text-gray-700">
-                    {order.provider || "—"}
-                  </td>
-                  <td className="px-4 py-3">
-                    <ScanPayStatusBadge status={order.status} />
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-wrap justify-end gap-1">
-                      {order.is_pending && (
-                        <>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            loading={isChecking}
-                            onClick={() => {
-                              setCheckingId(order.id);
-                              checkStatus.mutate(order);
-                            }}
-                          >
-                            {t("scan_pay__check_status")}
-                          </Button>
-                          {manualActions.markPaid && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => setMarkingPaid(order)}
-                            >
-                              {t("scan_pay__mark_paid")}
-                            </Button>
-                          )}
-                          {manualActions.cancelOrder && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="text-red-600 hover:text-red-700"
-                              onClick={() => setCancelling(order)}
-                            >
-                              {t("scan_pay__cancel_order")}
-                            </Button>
-                          )}
-                        </>
-                      )}
-                      {order.receipt_url && (
-                        <Button size="sm" variant="outline" asChild>
-                          <a
-                            href={order.receipt_url}
-                            target="_blank"
-                            rel="noreferrer"
-                          >
-                            <ExternalLinkIcon />
-                            {t("scan_pay__receipt")}
-                          </a>
-                        </Button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
+            {orders.map((order) => (
+              <tr key={order.id} className="align-top">
+                <td className="whitespace-nowrap px-4 py-3 text-gray-700">
+                  <div>{dayjs(order.created_date).format("DD MMM YYYY")}</div>
+                  <div className="text-xs text-gray-500">
+                    {dayjs(order.created_date).format("hh:mm A")}
+                  </div>
+                  {order.provider && (
+                    <div className="text-xs text-gray-500">{order.provider}</div>
+                  )}
+                </td>
+                <td className="px-4 py-3">
+                  <div className="font-medium text-gray-900">
+                    {order.patient?.name ?? "—"}
+                  </div>
+                  <div className="text-xs text-gray-500">{order.abha_address}</div>
+                </td>
+                <td className="px-4 py-3">
+                  <OrderReferences order={order} facilityId={facilityId} />
+                </td>
+                <td className="whitespace-nowrap px-4 py-3 text-right font-medium text-gray-900">
+                  {amountOf(order)}
+                </td>
+                <td className="px-4 py-3">
+                  <ScanPayStatusBadge status={order.status} />
+                </td>
+                <td className="px-4 py-3">{actionsFor(order)}</td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
 
-      <div className="flex items-center justify-between text-sm text-gray-600">
+      <div className="flex flex-col gap-3 text-sm text-gray-600 sm:flex-row sm:items-center sm:justify-between">
         <span>{t("scan_pay__total_orders", { count })}</span>
-        <div className="flex items-center gap-2">
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:flex">
           <Button
             size="sm"
             variant="outline"
@@ -312,7 +426,7 @@ const ScanPayOrders: FC<ScanPayOrdersProps> = ({ facilityId }) => {
           >
             {t("scan_pay__previous")}
           </Button>
-          <span>
+          <span className="text-center">
             {page + 1} / {pageCount}
           </span>
           <Button
