@@ -53,7 +53,6 @@ export type PaymentOrderListQuery = {
   pending?: boolean;
   status?: string;
   invoice?: string;
-  invoice_number?: string;
   search?: string;
   patient?: string;
   created_date_after?: string;
