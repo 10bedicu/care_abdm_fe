@@ -117,7 +117,7 @@
   "get_auth_methods": "Get Available Authentication Methods",
   "get_auth_mode_error": "Could not find any supported authentication methods, Please try again with a different authentication method",
   "any_id": "Enter any ID linked with your ABHA number",
-  "any_id_description": "Currently we support: Aadhaar Number / Mobile Number",
+  "any_id_description": "Currently we support: Aadhaar Number / Mobile Number / ABHA Number / ABHA Address",
   "enter_any_id": "Enter any ID linked with your ABHA number",
   "verify_otp_success": "OTP has been verified successfully.",
   "verify_and_link": "Verify and Link",
