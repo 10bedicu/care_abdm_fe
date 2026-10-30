@@ -13,6 +13,11 @@ import { HealthFacility } from "@/types/healthFacility";
 import { HealthInformation } from "@/types/healthInformation";
 import { PaginatedResponse } from "./types";
 import { Patient } from "@/types/patient";
+import {
+  PaymentOrder,
+  PaymentOrderActionResponse,
+  PaymentOrderListQuery,
+} from "@/types/paymentOrder";
 import { User } from "@/types/user";
 
 // FIXME: Move all the api specific types to a ./types.ts file
@@ -70,6 +75,14 @@ export const apis = {
     get: async (artefactId: string) => {
       return await request<HealthInformation>(
         `/api/abdm/health_information/${artefactId}`
+      );
+    },
+  },
+
+  facility: {
+    get: async (facilityId: string) => {
+      return await request<{ permissions?: string[] }>(
+        `/api/v1/facility/${facilityId}/`
       );
     },
   },
@@ -439,6 +452,45 @@ export const apis = {
       return await request<Patient>(
         `/api/abdm/v3/hip/patient/fetch-by-token/` + queryString(query)
       );
+    },
+  },
+
+  scanPay: {
+    orders: {
+      list: async (query: PaymentOrderListQuery) => {
+        const params = Object.fromEntries(
+          Object.entries(query).filter(
+            ([, value]) => value !== undefined && value !== ""
+          )
+        ) as Record<string, string | number | boolean>;
+        return await request<PaginatedResponse<PaymentOrder>>(
+          "/api/abdm/v3/scan-pay/orders/" + queryString(params)
+        );
+      },
+
+      checkStatus: async (orderId: string) => {
+        return await request<PaymentOrderActionResponse>(
+          `/api/abdm/v3/scan-pay/orders/${orderId}/check-status/`,
+          { method: "POST" }
+        );
+      },
+
+      cancel: async (orderId: string) => {
+        return await request<PaymentOrderActionResponse>(
+          `/api/abdm/v3/scan-pay/orders/${orderId}/cancel/`,
+          { method: "POST" }
+        );
+      },
+
+      markPaid: async (
+        orderId: string,
+        body: { reference_number: string; note?: string }
+      ) => {
+        return await request<PaymentOrderActionResponse>(
+          `/api/abdm/v3/scan-pay/orders/${orderId}/mark-paid/`,
+          { method: "POST", body: JSON.stringify(body) }
+        );
+      },
     },
   },
 };

@@ -1077,12 +1077,18 @@ const VerifyAadhaarWithDemographics: FC<VerifyAadhaarWithDemographicsProps> = ({
 
   const verifyAadhaarDemographicsMutation = useMutation({
     mutationFn: apis.healthId.abhaCreateVerifyAadhaarDemographics,
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       if (data) {
         setMemory((prev) => ({
           ...prev,
           transactionId: data.transaction_id,
-          abhaNumber: data.abha_number,
+          abhaNumber: {
+            ...data.abha_number,
+            address:
+              data.abha_number.address?.trim() || variables.address || null,
+            pincode:
+              data.abha_number.pincode?.trim() || variables.pin_code || null,
+          },
         }));
 
         if (!data.transaction_id) {

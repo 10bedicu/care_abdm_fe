@@ -25,8 +25,13 @@ const manifest = {
     PatientSearchActions: lazy(
       () => import("./components/pluggables/PatientSearchActions")
     ),
+    InvoiceRecordPaymentOptions: lazy(
+      () => import("./components/pluggables/InvoiceRecordPaymentOptions")
+    ),
   },
   navItems: [],
+  // host prefixes /facility/<id>; the sidebar shows the name verbatim
+  billingNavItems: [{ name: "Scan & Pay", url: "/billing/scan-pay" }],
   encounterTabs: {
     abdm: lazy(() => import("./components/encounter-tabs/Abdm")),
   },
