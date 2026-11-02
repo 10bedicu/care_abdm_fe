@@ -337,6 +337,8 @@ const EnterIdentifier: FC<EnterIdentifierProps> = ({ setMemory, goTo }) => {
       setAuthMethods(["AADHAAR_OTP"]);
     } else if (idType === "mobile") {
       setAuthMethods(["MOBILE_OTP"]);
+    } else if (idType === "abha-number") {
+      setAuthMethods(["AADHAAR_OTP", "MOBILE_OTP"]);
     } else {
       await checkAuthMethodsMutation.mutateAsync({
         abha_address: normalizedId,
