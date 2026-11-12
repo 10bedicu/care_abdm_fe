@@ -545,35 +545,44 @@ const EnterIdentifier: FC<EnterIdentifierProps> = ({ setMemory, goTo }) => {
                 {t("get_auth_methods")}
               </Button>
             </PopoverTrigger>
-            <PopoverContent align="start" className="p-2 gap-2">
-              {authMethods.map((method) => (
-                <Button
-                  key={method}
-                  type="button"
-                  variant="default"
-                  className="w-full justify-start"
-                  onClick={() => {
-                    const otpSystem =
-                      method === "AADHAAR_OTP" ? "aadhaar" : "abdm";
+            <PopoverContent
+              align="start"
+              className="flex flex-col p-2 gap-2"
+            >
+              {authMethods.map((method) => {
+                const otpSystem =
+                  method === "AADHAAR_OTP" ? "aadhaar" : "abdm";
+                const isSendingThisMethod =
+                  sendOtpMutation.isPending &&
+                  sendOtpMutation.variables?.otp_system === otpSystem;
 
-                    setMemory((prev) => ({
-                      ...prev,
-                      id: normalizedId,
-                      idType,
-                      otpSystem,
-                    }));
+                return (
+                  <Button
+                    key={method}
+                    type="button"
+                    variant="default"
+                    className="w-full justify-start"
+                    disabled={sendOtpMutation.isPending}
+                    onClick={() => {
+                      setMemory((prev) => ({
+                        ...prev,
+                        id: normalizedId,
+                        idType,
+                        otpSystem,
+                      }));
 
-                    sendOtpMutation.mutate({
-                      value: normalizedId,
-                      type: idType,
-                      otp_system: otpSystem,
-                    });
-                  }}
-                  loading={sendOtpMutation.isPending}
-                >
-                  {t(`abha__auth_method__${method}`)}
-                </Button>
-              ))}
+                      sendOtpMutation.mutate({
+                        value: normalizedId,
+                        type: idType,
+                        otp_system: otpSystem,
+                      });
+                    }}
+                    loading={isSendingThisMethod}
+                  >
+                    {t(`abha__auth_method__${method}`)}
+                  </Button>
+                );
+              })}
             </PopoverContent>
           </Popover>
         )}
