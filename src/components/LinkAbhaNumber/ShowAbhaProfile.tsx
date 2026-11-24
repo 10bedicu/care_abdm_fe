@@ -134,7 +134,7 @@ export const AbhaProfile: FC<AbhaProfileProps> = ({ memory, onSuccess }) => {
   const identity = (
     <>
       <Detail label={t("abha_number")}>{abha?.abha_number}</Detail>
-      <Detail label={t("abha_address")}>{abha?.health_id}</Detail>
+      <Detail label={t("abha_address")}>{abha?.abha_address}</Detail>
       <Detail label={t("full_name")}>{abha?.name}</Detail>
       <div className="grid grid-cols-2 gap-4">
         <Detail label={t("date_of_birth")}>{abha?.date_of_birth}</Detail>

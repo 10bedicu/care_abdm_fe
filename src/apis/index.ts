@@ -36,7 +36,6 @@ export const apis = {
     },
 
     create: async (body: {
-      patient_abha: string;
       encounter: string;
       hi_types: ConsentHIType[];
       purpose: ConsentPurpose;
@@ -149,13 +148,16 @@ export const apis = {
   },
 
   abhaNumber: {
-    get: async (abhaNumberId: string) => {
+    get: async (abhaNumberId: string, query?: { facility?: string }) => {
       return await request<AbhaNumber>(
-        `/api/abdm/abha_number/${abhaNumberId}/`
+        `/api/abdm/abha_number/${abhaNumberId}/` +
+          queryString(
+            query?.facility ? { facility: query.facility } : undefined
+          )
       );
     },
 
-    create: async (body: Partial<AbhaNumber>) => {
+    create: async (body: Partial<AbhaNumber> & { facility: string }) => {
       return await request<AbhaNumber>("/api/abdm/abha_number/", {
         method: "POST",
         body: JSON.stringify(body),
@@ -165,6 +167,7 @@ export const apis = {
 
   healthId: {
     abhaCreateVerifyAadhaarDemographics: async (body: {
+      facility: string;
       transaction_id?: string;
       name: string;
       date_of_birth: string;
@@ -208,6 +211,7 @@ export const apis = {
     },
 
     abhaCreateVerifyAadhaarFace: async (body: {
+      facility: string;
       transaction_id?: string;
       aadhaar: string;
       mobile: string;
@@ -223,6 +227,7 @@ export const apis = {
     },
 
     abhaCreateVerifyAadhaarBio: async (body: {
+      facility: string;
       transaction_id?: string;
       aadhaar: string;
       fingerprint_pid: string;
@@ -252,6 +257,7 @@ export const apis = {
     },
 
     abhaCreateVerifyAadhaarOtp: async (body: {
+      facility: string;
       transaction_id: string;
       otp: string;
       mobile: string;
@@ -306,13 +312,13 @@ export const apis = {
     },
 
     abhaCreateEnrolAbhaAddress: async (body: {
+      facility: string;
       transaction_id: string;
       abha_address: string;
     }) => {
       return await request<{
         detail?: string;
         transaction_id: string;
-        health_id: string;
         preferred_abha_address: string;
         abha_number: AbhaNumber;
       }>("/api/abdm/v3/health_id/create/enrol_abha_address/", {
@@ -324,6 +330,7 @@ export const apis = {
     linkAbhaNumberAndPatient: async (body: {
       abha_number: string;
       patient: string;
+      facility: string;
     }) => {
       return await request<{
         detail: string;
@@ -373,6 +380,7 @@ export const apis = {
     },
 
     abhaLoginVerifyUser: async (body: {
+      facility: string;
       transaction_id: string;
       account_id: number;
     }) => {

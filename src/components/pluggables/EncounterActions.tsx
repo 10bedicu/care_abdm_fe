@@ -34,8 +34,11 @@ const EncounterActions: FC<WithMeta<EncounterActionsProps>> = ({
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const { data: abhaNumber } = useQuery({
-    queryKey: ["abhaNumber", encounter.patient.id],
-    queryFn: () => apis.abhaNumber.get(encounter.patient.id),
+    queryKey: ["abhaNumber", encounter.patient.id, encounter.facility.id],
+    queryFn: () =>
+      apis.abhaNumber.get(encounter.patient.id, {
+        facility: encounter.facility.id,
+      }),
     enabled: !!encounter.patient.id,
   });
 

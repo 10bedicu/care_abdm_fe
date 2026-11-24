@@ -651,6 +651,7 @@ const VerifyId: FC<VerifyIdProps> = ({
   onSuccess,
 }) => {
   const { t } = useTranslation(I18NNAMESPACE);
+  const { facilityId } = useLinkAbhaNumberContext();
 
   const form = useForm<VerifyIdFormValues>({
     resolver: zodResolver(verifyIdFormSchema),
@@ -674,7 +675,7 @@ const VerifyId: FC<VerifyIdProps> = ({
   const verifyOtpMutation = useMutation({
     mutationFn: apis.healthId.abhaLoginVerifyOtp,
     onSuccess: (data) => {
-      if (!data) return;
+      if (!data || !facilityId) return;
 
       const accounts = data.accounts ?? [];
 
@@ -692,6 +693,7 @@ const VerifyId: FC<VerifyIdProps> = ({
       verifyUserMutation.mutate({
         transaction_id: data.transaction_id,
         account_id: accounts[0]?.id ?? 0,
+        facility: facilityId,
       });
     },
   });
@@ -807,6 +809,7 @@ const ChooseAbhaAccount: FC<ChooseAbhaAccountProps> = ({
   onSuccess,
 }) => {
   const { t } = useTranslation(I18NNAMESPACE);
+  const { facilityId } = useLinkAbhaNumberContext();
 
   const accounts = memory?.loginAccounts ?? [];
 
@@ -836,11 +839,12 @@ const ChooseAbhaAccount: FC<ChooseAbhaAccountProps> = ({
             type="button"
             disabled={verifyUserMutation.isPending}
             onClick={() => {
-              if (!memory?.transactionId) return;
+              if (!memory?.transactionId || !facilityId) return;
 
               verifyUserMutation.mutate({
                 transaction_id: memory.transactionId,
                 account_id: account.id,
+                facility: facilityId,
               });
             }}
             className="flex items-center gap-3 rounded-md border border-border bg-card p-3 text-left shadow-xs transition-colors outline-none hover:bg-muted focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50"
@@ -904,6 +908,7 @@ const VerifyAadhaarWithOtp: FC<VerifyAadhaarWithOtpProps> = ({
   goTo,
 }) => {
   const { t } = useTranslation(I18NNAMESPACE);
+  const { facilityId } = useLinkAbhaNumberContext();
 
   const form = useForm<VerifyAadhaarWithOtpFormValues>({
     resolver: zodResolver(verifyAadhaarWithOtpFormSchema),
@@ -946,12 +951,13 @@ const VerifyAadhaarWithOtp: FC<VerifyAadhaarWithOtpProps> = ({
   });
 
   function onSubmit(values: VerifyAadhaarWithOtpFormValues) {
-    if (!memory?.transactionId) return;
+    if (!memory?.transactionId || !facilityId) return;
 
     verifyAadhaarOtpMutation.mutate({
       otp: values.otp,
       mobile: values.mobile,
       transaction_id: memory.transactionId,
+      facility: facilityId,
     });
   }
 
@@ -1086,6 +1092,7 @@ const VerifyAadhaarWithDemographics: FC<VerifyAadhaarWithDemographicsProps> = ({
   goTo,
 }) => {
   const { t } = useTranslation(I18NNAMESPACE);
+  const { facilityId } = useLinkAbhaNumberContext();
 
   const form = useForm<VerifyAadhaarWithDemographicsFormValues>({
     resolver: zodResolver(verifyAadhaarWithDemographicsFormSchema),
@@ -1139,9 +1146,10 @@ const VerifyAadhaarWithDemographics: FC<VerifyAadhaarWithDemographicsProps> = ({
   });
 
   function onSubmit(values: VerifyAadhaarWithDemographicsFormValues) {
-    if (!memory) return;
+    if (!memory || !facilityId) return;
 
     verifyAadhaarDemographicsMutation.mutate({
+      facility: facilityId,
       transaction_id: memory.transactionId || undefined,
       aadhaar: memory.aadhaarNumber,
       name: values.name,
@@ -1396,6 +1404,7 @@ const VerifyAadhaarWithFace: FC<VerifyAadhaarWithFaceProps> = ({
   goTo,
 }) => {
   const { t } = useTranslation(I18NNAMESPACE);
+  const { facilityId } = useLinkAbhaNumberContext();
   const [isPolling, setIsPolling] = useState(false);
   const faceAuthUrl =
     window?.__CARE_PLUGIN_RUNTIME__?.meta?.care_abdm_fe?.config?.faceAuthUrl;
@@ -1448,10 +1457,13 @@ const VerifyAadhaarWithFace: FC<VerifyAadhaarWithFaceProps> = ({
             transactionId: data.transaction_id,
           }));
 
+          if (!facilityId) return;
+
           verifyAadhaarFaceMutation.mutate({
             aadhaar: form.getValues("_aadhaar"),
             mobile: form.getValues("mobile"),
             transaction_id: memory?.transactionId,
+            facility: facilityId,
           });
         } else if (data.status === "FAILED") {
           setIsPolling(false);
@@ -1609,6 +1621,7 @@ const VerifyAadhaarWithBio: FC<VerifyAadhaarWithBioProps> = ({
   goTo,
 }) => {
   const { t } = useTranslation(I18NNAMESPACE);
+  const { facilityId } = useLinkAbhaNumberContext();
 
   const form = useForm<VerifyAadhaarWithBioFormValues>({
     resolver: zodResolver(verifyAadhaarWithBioFormSchema),
@@ -1689,11 +1702,14 @@ const VerifyAadhaarWithBio: FC<VerifyAadhaarWithBioProps> = ({
   ]);
 
   function onSubmit(values: VerifyAadhaarWithBioFormValues) {
+    if (!facilityId) return;
+
     verifyAadhaarBioMutation.mutate({
       aadhaar: form.getValues("_aadhaar"),
       fingerprint_pid: values.fingerprint_pid,
       mobile: values.mobile,
       transaction_id: memory?.transactionId || undefined,
+      facility: facilityId,
     });
   }
 
@@ -1893,7 +1909,7 @@ const HandleExistingAbha: FC<HandleExistingAbhaProps> = ({ memory, goTo }) => {
           {t("use_existing_abha_address")}
         </Button>
         <p className="text-xs text-muted-foreground">
-          {memory?.abhaNumber?.health_id}
+          {memory?.abhaNumber?.abha_address}
         </p>
       </div>
     </div>
@@ -2178,6 +2194,7 @@ const ChooseAbhaAddress: FC<ChooseAbhaAddressProps> = ({
   goTo,
 }) => {
   const { t } = useTranslation(I18NNAMESPACE);
+  const { facilityId } = useLinkAbhaNumberContext();
 
   const [suggestions, setSuggestions] = useState<string[]>([]);
 
@@ -2224,11 +2241,12 @@ const ChooseAbhaAddress: FC<ChooseAbhaAddressProps> = ({
   });
 
   function onSubmit(values: ChooseAbhaAddressFormValues) {
-    if (!memory?.transactionId) return;
+    if (!memory?.transactionId || !facilityId) return;
 
     enrollAbhaAddressMutation.mutate({
       abha_address: values.abhaAddress,
       transaction_id: memory.transactionId,
+      facility: facilityId,
     });
   }
 

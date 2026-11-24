@@ -18,12 +18,13 @@ type PatientDetailsTabDemographyGeneralInfoProps = {
 
 const PatientDetailsTabDemographyGeneralInfo: FC<
   WithMeta<PatientDetailsTabDemographyGeneralInfoProps>
-> = ({ patientId }) => {
+> = ({ patientId, facilityId }) => {
   const { t } = useTranslation(I18NNAMESPACE);
 
   const { data: abhaNumber } = useQuery({
-    queryKey: ["abhaNumber", patientId],
-    queryFn: () => apis.abhaNumber.get(patientId),
+    // The host passes an empty string outside a facility.
+    queryKey: ["abhaNumber", patientId, facilityId || undefined],
+    queryFn: () => apis.abhaNumber.get(patientId, { facility: facilityId }),
     enabled: !!patientId,
   });
 
@@ -95,7 +96,7 @@ const PatientDetailsTabDemographyGeneralInfo: FC<
             {t("abha_address")}
           </div>
           <div className="mt-1 text-sm leading-5 font-semibold text-foreground">
-            {abhaNumber.health_id || "-"}
+            {abhaNumber.abha_address || "-"}
           </div>
         </div>
 

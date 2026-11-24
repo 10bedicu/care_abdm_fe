@@ -28,6 +28,7 @@ import { User } from "@/types/user";
 import { LinkAbhaForm } from "./LinkAbhaForm";
 
 type LinkAbhaNumberContextValue = {
+  facilityId?: string;
   healthFacility?: HealthFacility;
   currentUser?: User;
 };
@@ -38,6 +39,7 @@ type LinkAbhaNumberProps = Omit<ButtonProps, "onClick" | "children"> & {
   enforceLinking?: boolean;
   backUrl?: string;
   facilityId?: string;
+  label?: string;
   onSuccess: (abhaNumber: AbhaNumber) => void;
 };
 
@@ -50,6 +52,7 @@ const COLUMN = "mx-auto w-full max-w-lg px-4";
 
 export const LinkAbhaNumber: FC<LinkAbhaNumberProps> = ({
   facilityId,
+  label,
   onSuccess,
   backUrl,
   enforceLinking = false,
@@ -57,7 +60,11 @@ export const LinkAbhaNumber: FC<LinkAbhaNumberProps> = ({
   ...props
 }) => {
   const { t } = useTranslation(I18NNAMESPACE);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(enforceLinking);
+
+  // Every verification is recorded against a facility, so the flow needs one.
+  const [isDrawerOpen, setIsDrawerOpen] = useState(
+    enforceLinking && !!facilityId,
+  );
 
   const handleOnSuccess = (abhaNumber: AbhaNumber) => {
     setIsDrawerOpen(false);
@@ -75,40 +82,45 @@ export const LinkAbhaNumber: FC<LinkAbhaNumberProps> = ({
     enabled: !!facilityId,
   });
 
+  const isDisabled = !facilityId || !healthFacility;
+  const title = label ?? "Generate/Link ABHA Number";
+
   const trigger = (
     <Button
       type="button"
       {...props}
       className={cn("w-full", className)}
-      disabled={!healthFacility}
+      disabled={isDisabled}
       onClick={() => setIsDrawerOpen(true)}
     >
       <IdCardIcon />
-      Generate/Link ABHA Number
+      {title}
     </Button>
   );
 
   return (
     <LinkAbhaNumberContext.Provider
       value={{
+        facilityId,
         healthFacility,
         currentUser,
       }}
     >
       <AbdmScope>
-        {healthFacility ? (
-          trigger
-        ) : (
+        {isDisabled ? (
           <Tooltip>
             {/* A disabled button has no pointer events; the wrapper takes the hover. */}
             <TooltipTrigger asChild>
               <span className="block w-full">{trigger}</span>
             </TooltipTrigger>
             <TooltipContent>
-              Abha linking is disabled for this facility as it doesn't have
-              health facility id configured.
+              {facilityId
+                ? "Abha linking is disabled for this facility as it doesn't have health facility id configured."
+                : t("abha_disabled_due_to_no_facility")}
             </TooltipContent>
           </Tooltip>
+        ) : (
+          trigger
         )}
         <Drawer
           open={isDrawerOpen}
@@ -133,7 +145,7 @@ export const LinkAbhaNumber: FC<LinkAbhaNumberProps> = ({
               )}
             >
               <div className="min-w-0">
-                <DrawerTitle>Generate/Link ABHA Number</DrawerTitle>
+                <DrawerTitle>{title}</DrawerTitle>
                 <DrawerDescription>
                   Generate/link patient's ABHA details for easy access to
                   healthcare services.

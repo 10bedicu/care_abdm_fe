@@ -31,8 +31,8 @@ const PatientRegistrationForm: FC<WithMeta<PatientRegistrationFormProps>> = ({
   const { t } = useTranslation(I18NNAMESPACE);
 
   const { data: abhaNumber } = useQuery({
-    queryKey: ["abhaNumber", patientId],
-    queryFn: () => apis.abhaNumber.get(patientId!),
+    queryKey: ["abhaNumber", patientId, facilityId],
+    queryFn: () => apis.abhaNumber.get(patientId!, { facility: facilityId }),
     enabled: !!patientId,
     retry: false,
   });
@@ -43,7 +43,7 @@ const PatientRegistrationForm: FC<WithMeta<PatientRegistrationFormProps>> = ({
     if (abhaNumber) {
       form.setValue("abha_id", abhaNumber.external_id, setFormValueOpts);
       form.setValue("abha_number", abhaNumber.abha_number, setFormValueOpts);
-      form.setValue("abha_address", abhaNumber.health_id, setFormValueOpts);
+      form.setValue("abha_address", abhaNumber.abha_address, setFormValueOpts);
     }
   }, [abhaNumber, patientName, form]);
 
@@ -71,6 +71,7 @@ const PatientRegistrationForm: FC<WithMeta<PatientRegistrationFormProps>> = ({
           mutation?.options.mutationKey?.includes("update_patient")) &&
         mutation?.state.data?.id &&
         form.watch("abha_id") &&
+        facilityId &&
         !abhaNumber?.patient
       ) {
         isFirstSuccess = false;
@@ -78,6 +79,7 @@ const PatientRegistrationForm: FC<WithMeta<PatientRegistrationFormProps>> = ({
         linkAbhaNumberAndPatientMutation.mutate({
           patient: mutation.state.data.id,
           abha_number: form.watch("abha_id"),
+          facility: facilityId,
         });
       }
     });
@@ -119,15 +121,18 @@ const PatientRegistrationForm: FC<WithMeta<PatientRegistrationFormProps>> = ({
           );
           form.setValue(
             "abha_address",
-            abhaNumber.health_id,
+            abhaNumber.abha_address,
             setFormValueOpts,
           );
 
           if (patientId) {
-            linkAbhaNumberAndPatientMutation.mutate({
-              patient: patientId,
-              abha_number: form.getValues("abha_id"),
-            });
+            if (facilityId) {
+              linkAbhaNumberAndPatientMutation.mutate({
+                patient: patientId,
+                abha_number: form.getValues("abha_id"),
+                facility: facilityId,
+              });
+            }
             return;
           }
 
@@ -204,7 +209,7 @@ const PatientRegistrationForm: FC<WithMeta<PatientRegistrationFormProps>> = ({
             <FieldLabel htmlFor="abha-info-address">ABHA Address</FieldLabel>
             <Input
               id="abha-info-address"
-              value={abhaNumber?.health_id || form.watch("abha_address") || ""}
+              value={abhaNumber?.abha_address || form.watch("abha_address") || ""}
               disabled
             />
           </Field>

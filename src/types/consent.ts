@@ -62,7 +62,7 @@ export type Consent = {
   id: string;
   consent_id: null | string;
 
-  patient_abha: string;
+  abha_address: string;
   care_contexts: ConsentCareContext[];
 
   status: ConsentStatus;
@@ -93,6 +93,6 @@ export type ConsentArtefact = {
 
 export type ConsentRequest = {
   requester: User;
-  patient_abha_object: AbhaNumber;
+  abha_number_object: AbhaNumber;
   consent_artefacts: ConsentArtefact[];
 } & Consent;

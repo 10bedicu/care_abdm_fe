@@ -23,8 +23,8 @@ const PatientHomeActions: FC<WithMeta<PatientHomeActionsProps>> = ({
   const queryClient = useQueryClient();
   const { t } = useTranslation(I18NNAMESPACE);
   const { data: abhaNumber } = useQuery({
-    queryKey: ["abhaNumber", patient.id],
-    queryFn: () => apis.abhaNumber.get(patient.id),
+    queryKey: ["abhaNumber", patient.id, facilityId],
+    queryFn: () => apis.abhaNumber.get(patient.id, { facility: facilityId }),
     enabled: !!patient.id,
     retry: false,
   });
@@ -42,22 +42,30 @@ const PatientHomeActions: FC<WithMeta<PatientHomeActionsProps>> = ({
     },
   });
 
+  // A linked patient can only be verified again at a facility.
+  if (abhaNumber && !facilityId) {
+    return null;
+  }
+
   return (
-    <>
-      {!abhaNumber && (
-        <LinkAbhaNumber
-          facilityId={facilityId}
-          onSuccess={(abhaNumber) => {
-            linkAbhaNumberAndPatientMutation.mutate({
-              patient: patient.id,
-              abha_number: abhaNumber.external_id,
-            });
-          }}
-          variant="outline"
-          className={className}
-        />
-      )}
-    </>
+    <LinkAbhaNumber
+      facilityId={facilityId}
+      label={
+        abhaNumber &&
+        (abhaNumber.auth ? t("reverify_abha") : t("verify_abha_at_facility"))
+      }
+      onSuccess={(verifiedAbhaNumber) => {
+        if (!facilityId) return;
+
+        linkAbhaNumberAndPatientMutation.mutate({
+          patient: patient.id,
+          abha_number: verifiedAbhaNumber.external_id,
+          facility: facilityId,
+        });
+      }}
+      variant="outline"
+      className={className}
+    />
   );
 };
 

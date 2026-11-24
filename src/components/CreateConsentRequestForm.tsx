@@ -28,6 +28,7 @@ import { Encounter } from "@/types/encounter";
 import { FC, useId } from "react";
 import { I18NNAMESPACE } from "@/lib/constants";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { apis } from "@/apis";
 import dayjs from "@/lib/dayjs";
@@ -46,7 +47,6 @@ type CreateConsentRequestFormProps = {
 };
 
 const createConsentRequestFormSchema = z.object({
-  patient_abha: z.string(),
   purpose: z.enum(CONSENT_PURPOSES),
   time_range: z.object({
     from: z.date(),
@@ -68,11 +68,11 @@ const CreateConsentRequestForm: FC<CreateConsentRequestFormProps> = ({
 }) => {
   const { t } = useTranslation(I18NNAMESPACE);
   const dateRangeLabelId = useId();
+  const patientIdentifierId = useId();
 
   const form = useForm<CreateConsentRequestFormValues>({
     resolver: zodResolver(createConsentRequestFormSchema),
     defaultValues: {
-      patient_abha: abhaNumber?.health_id,
       purpose: "CAREMGT",
       time_range: {
         from: dayjs().subtract(30, "day").toDate(),
@@ -89,12 +89,17 @@ const CreateConsentRequestForm: FC<CreateConsentRequestFormProps> = ({
       toast.success(t("consent_requested_successfully"));
       onSuccess?.(data);
     },
+    onError: (error) => {
+      toast.error(error.message);
+    },
   });
+
+  // The backend raises the request with the patient's auth at this facility.
+  const hasAuthAtFacility = !!abhaNumber?.auth;
 
   function onSubmit(values: CreateConsentRequestFormValues) {
     createConsentRequestMutation.mutate({
       ...values,
-      patient_abha: form.getValues("patient_abha"),
       encounter: encounter.id,
       from_time: values.time_range.from,
       to_time: values.time_range.to,
@@ -110,20 +115,27 @@ const CreateConsentRequestForm: FC<CreateConsentRequestFormProps> = ({
         }}
         className="space-y-5"
       >
-        <FormField
-          control={form.control}
-          disabled
-          name="patient_abha"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t("consent_request__patient_identifier")}</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+        <div className="grid gap-2">
+          <Label htmlFor={patientIdentifierId}>
+            {t("consent_request__patient_identifier")}
+          </Label>
+          <Input
+            id={patientIdentifierId}
+            value={abhaNumber?.abha_address ?? ""}
+            aria-describedby={
+              hasAuthAtFacility ? undefined : `${patientIdentifierId}-error`
+            }
+            disabled
+          />
+          {!hasAuthAtFacility && (
+            <p
+              id={`${patientIdentifierId}-error`}
+              className="text-sm text-destructive"
+            >
+              {t("consent_request__abha_not_verified_at_facility")}
+            </p>
           )}
-        />
+        </div>
 
         <FormField
           control={form.control}
@@ -219,7 +231,11 @@ const CreateConsentRequestForm: FC<CreateConsentRequestFormProps> = ({
           >
             {t("cancel")}
           </Button>
-          <Button type="submit" loading={createConsentRequestMutation.isPending}>
+          <Button
+            type="submit"
+            loading={createConsentRequestMutation.isPending}
+            disabled={!hasAuthAtFacility}
+          >
             {t("request_consent")}
           </Button>
         </DialogFooter>

@@ -61,20 +61,20 @@ npm run dev
    
 2. **PatientDetailsTabDemographyGeneralInfo**
    - Location: Patient details page, demography tab
-   - Function: Displays ABHA details card
+   - Function: Displays ABHA details card. The ABHA Address shown is the one last verified at the current facility, else the one last verified anywhere
    - Condition: Visible only when the Patient's ABHA number is linked
 
 3. **PatientHomeActions**
    - Location: Patient details page
-   - Function: Provides ABHA linking functionality
-   - Condition: Visible only when the Patient doesn't have thier ABHA Number linked
+   - Function: Provides ABHA linking functionality. For a Patient who is already linked, the same flow verifies the ABHA again at the current facility ("Verify ABHA at this facility" when it has not been verified there yet, "Re-verify ABHA" otherwise)
+   - Condition: Visible when the Patient doesn't have thier ABHA Number linked, and inside a facility when it is linked
    - Requirements: Health Facility ID should be linked before linking ABHA Number to the Patient
 
 4. **EncounterActions**
    - Location: Encounter page, dropdown menu
    - Function: Dialog for creating consent requests for data from 3rd party hospitals
    - Condition: Visible only when the Patient's ABHA number is linked
-   - Requirements: Health Facility ID should be linked before making a consent request
+   - Requirements: Health Facility ID should be linked before making a consent request, and the Patient's ABHA should be verified at the encounter's facility
 
 5. **PatientRegistrationForm**
    - Location: Patient registration page
