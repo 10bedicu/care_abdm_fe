@@ -1,9 +1,19 @@
-import { FC, useState } from "react";
+import { FC, useId, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 
 import { apis } from "@/apis";
 import { APIError } from "@/apis/request";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,8 +23,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { formatAmount } from "@/components/scan-pay/ScanPayStatusBadge";
 import { I18NNAMESPACE } from "@/lib/constants";
@@ -116,24 +126,25 @@ export const CancelOrderDialog: FC<OrderDialogProps> = ({
   const { t } = useTranslation(I18NNAMESPACE);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="abdm-container max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{t("scan_pay__cancel_title")}</DialogTitle>
-          <DialogDescription>
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{t("scan_pay__cancel_title")}</AlertDialogTitle>
+          <AlertDialogDescription>
             {t("scan_pay__cancel_description", {
               number: order?.invoice?.number ?? order?.order_number ?? "",
             })}
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={loading}>
             {t("scan_pay__keep_order")}
-          </Button>
-          <Button
-            variant="destructive"
-            loading={loading}
-            onClick={async () => {
+          </AlertDialogCancel>
+          <AlertDialogAction
+            render={<Button variant="destructive" loading={loading} />}
+            onClick={async (event) => {
+              // Stay open until the order is cancelled.
+              event.preventDefault();
               if (!order) return;
               try {
                 await onConfirm(order);
@@ -144,17 +155,17 @@ export const CancelOrderDialog: FC<OrderDialogProps> = ({
             }}
           >
             {t("scan_pay__cancel_order")}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 };
 
 type MarkPaidDialogProps = Omit<OrderDialogProps, "onConfirm"> & {
   onConfirm: (
     order: PaymentOrder,
-    values: { reference_number: string; note: string }
+    values: { reference_number: string; note: string },
   ) => Promise<unknown>;
 };
 
@@ -166,6 +177,7 @@ export const MarkPaidDialog: FC<MarkPaidDialogProps> = ({
   loading,
 }) => {
   const { t } = useTranslation(I18NNAMESPACE);
+  const id = useId();
   const [reference, setReference] = useState("");
   const [note, setNote] = useState("");
 
@@ -179,7 +191,7 @@ export const MarkPaidDialog: FC<MarkPaidDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={close}>
-      <DialogContent className="abdm-container max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t("scan_pay__mark_paid_title")}</DialogTitle>
           <DialogDescription>
@@ -189,51 +201,60 @@ export const MarkPaidDialog: FC<MarkPaidDialogProps> = ({
             })}
           </DialogDescription>
         </DialogHeader>
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="scan-pay-reference">
+        <form
+          className="space-y-5"
+          onSubmit={async (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            if (!order || !reference.trim()) return;
+            try {
+              await onConfirm(order, {
+                reference_number: reference.trim(),
+                note: note.trim(),
+              });
+              close(false);
+            } catch {
+              // already reported by the mutation's onError
+            }
+          }}
+        >
+          <Field>
+            <FieldLabel htmlFor={`${id}-reference`}>
               {t("scan_pay__reference_number")}
-            </Label>
+            </FieldLabel>
             <Input
-              id="scan-pay-reference"
+              id={`${id}-reference`}
               value={reference}
-              onChange={(e) => setReference(e.target.value)}
+              onChange={(event) => setReference(event.target.value)}
+              disabled={loading}
+              required
               autoFocus
             />
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="scan-pay-note">{t("scan_pay__note")}</Label>
+          </Field>
+          <Field>
+            <FieldLabel htmlFor={`${id}-note`}>{t("scan_pay__note")}</FieldLabel>
             <Textarea
-              id="scan-pay-note"
+              id={`${id}-note`}
               value={note}
-              onChange={(e) => setNote(e.target.value)}
+              onChange={(event) => setNote(event.target.value)}
+              disabled={loading}
               rows={3}
             />
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => close(false)}>
-            {t("back")}
-          </Button>
-          <Button
-            loading={loading}
-            disabled={!reference.trim()}
-            onClick={async () => {
-              if (!order) return;
-              try {
-                await onConfirm(order, {
-                  reference_number: reference.trim(),
-                  note: note.trim(),
-                });
-                close(false);
-              } catch {
-                // already reported by the mutation's onError
-              }
-            }}
-          >
-            {t("scan_pay__mark_paid")}
-          </Button>
-        </DialogFooter>
+          </Field>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => close(false)}
+              disabled={loading}
+            >
+              {t("back")}
+            </Button>
+            <Button type="submit" loading={loading} disabled={!reference.trim()}>
+              {t("scan_pay__mark_paid")}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

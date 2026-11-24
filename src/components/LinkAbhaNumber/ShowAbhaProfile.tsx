@@ -1,12 +1,14 @@
+import { AbdmScope } from "@/components/AbdmScope";
 import {
   Drawer,
+  DrawerBody,
   DrawerContent,
   DrawerDescription,
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-import { FC, useState } from "react";
+import { FC, ReactNode, useState } from "react";
 import { FileDownIcon, IdCardIcon, ImageDownIcon } from "lucide-react";
 import useMultiStepForm, { InjectedStepProps } from "./useMultiStepForm";
 
@@ -42,38 +44,38 @@ export const ShowAbhaProfile: FC<ShowAbhaProfileProps> = ({ abhaNumber }) => {
   );
 
   return (
-    <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-      <DrawerTrigger className="abdm-container">
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            setIsDrawerOpen(true);
-          }}
-        >
-          <span>
+    <AbdmScope>
+      <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
+        <DrawerTrigger asChild>
+          <Button type="button" variant="outline">
             <IdCardIcon />
-          </span>
-          Show ABHA Profile
-        </Button>
-      </DrawerTrigger>
-      <DrawerContent className="abdm-container">
-        <div className="md:mx-auto max-w-screen md:max-w-md max-md:p-4 max-h-svh">
-          <DrawerHeader>
+            Show ABHA Profile
+          </Button>
+        </DrawerTrigger>
+        <DrawerContent size="md">
+          <DrawerHeader showCloseButton className="px-4">
             <DrawerTitle>Abha Profile</DrawerTitle>
             <DrawerDescription>
               View and manage your ABHA profile details for better healthcare
               access.
             </DrawerDescription>
           </DrawerHeader>
-          {currentStep}
-        </div>
-      </DrawerContent>
-    </Drawer>
+          <DrawerBody>{currentStep}</DrawerBody>
+        </DrawerContent>
+      </Drawer>
+    </AbdmScope>
   );
 };
+
+/** A label and its value, as on the host's patient demography tab. */
+const Detail = ({ label, children }: { label: string; children: ReactNode }) => (
+  <div className="min-w-0">
+    <div className="text-sm text-muted-foreground">{label}</div>
+    <div className="mt-1 text-sm font-semibold wrap-anywhere text-foreground">
+      {children ?? "-"}
+    </div>
+  </div>
+);
 
 export type AbhaProfileProps = InjectedStepProps<FormMemory> & {
   onSuccess?: (abhaNumber: AbhaNumber) => void;
@@ -128,134 +130,63 @@ export const AbhaProfile: FC<AbhaProfileProps> = ({ memory, onSuccess }) => {
     },
   });
 
-  return (
-    <div className="py-6">
-      <div className="flex flex-col gap-4">
-        {memory?.abhaNumber.profile_photo && (
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div>
-              <img
-                src={`data:image/png;base64,${memory?.abhaNumber.profile_photo}`}
-                alt={`${memory?.abhaNumber.name}'s photo`}
-                className="w-48 h-60 rounded-lg"
-              />
-            </div>
+  const abha = memory?.abhaNumber;
+  const identity = (
+    <>
+      <Detail label={t("abha_number")}>{abha?.abha_number}</Detail>
+      <Detail label={t("abha_address")}>{abha?.health_id}</Detail>
+      <Detail label={t("full_name")}>{abha?.name}</Detail>
+      <div className="grid grid-cols-2 gap-4">
+        <Detail label={t("date_of_birth")}>{abha?.date_of_birth}</Detail>
+        <Detail label={t("gender")}>{abha?.gender}</Detail>
+      </div>
+    </>
+  );
 
-            <div className="flex flex-col gap-4">
-              <div>
-                <h4 className="text-xs text-secondary-700">
-                  {t("abha_number")}
-                </h4>
-                <p>{memory?.abhaNumber.abha_number ?? "-"}</p>
-              </div>
-              <div>
-                <h4 className="text-xs text-secondary-700">
-                  {t("abha_address")}
-                </h4>
-                <p>{memory?.abhaNumber.health_id ?? "-"}</p>
-              </div>
-              <div>
-                <h4 className="text-xs text-secondary-700">{t("full_name")}</h4>
-                <p>{memory?.abhaNumber.name ?? "-"}</p>
-              </div>
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div>
-                  <h4 className="text-xs text-secondary-700">
-                    {t("date_of_birth")}
-                  </h4>
-                  <p>{memory?.abhaNumber.date_of_birth ?? "-"}</p>
-                </div>
-                <div>
-                  <h4 className="text-xs text-secondary-700">{t("gender")}</h4>
-                  <p>{memory?.abhaNumber.gender ?? "-"}</p>
-                </div>
-              </div>
-            </div>
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-4">
+        {abha?.profile_photo ? (
+          <div className="grid gap-4 sm:grid-cols-[auto_1fr]">
+            <img
+              src={`data:image/png;base64,${abha.profile_photo}`}
+              alt={`${abha.name}'s photo`}
+              className="h-60 w-48 rounded-lg border border-border object-cover"
+            />
+            <div className="flex flex-col gap-4">{identity}</div>
           </div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2">{identity}</div>
         )}
-        {!memory?.abhaNumber.profile_photo && (
-          <>
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div>
-                <h4 className="text-xs text-secondary-700">
-                  {t("abha_number")}
-                </h4>
-                <p>{memory?.abhaNumber.abha_number ?? "-"}</p>
-              </div>
-              <div>
-                <h4 className="text-xs text-secondary-700">
-                  {t("abha_address")}
-                </h4>
-                <p>{memory?.abhaNumber.health_id ?? "-"}</p>
-              </div>
-            </div>
-            <div className="grid sm:grid-cols-3 gap-4">
-              <div>
-                <h4 className="text-xs text-secondary-700">{t("full_name")}</h4>
-                <p>{memory?.abhaNumber.name ?? "-"}</p>
-              </div>
-              <div>
-                <h4 className="text-xs text-secondary-700">{t("gender")}</h4>
-                <p>{memory?.abhaNumber.gender ?? "-"}</p>
-              </div>
-              <div>
-                <h4 className="text-xs text-secondary-700">
-                  {t("date_of_birth")}
-                </h4>
-                <p>{memory?.abhaNumber.date_of_birth ?? "-"}</p>
-              </div>
-            </div>
-          </>
-        )}
-        <div className="grid sm:grid-cols-1 gap-4">
-          <div>
-            <h4 className="text-xs text-secondary-700">{t("address")}</h4>
-            <p>{memory?.abhaNumber.address ?? "-"}</p>
-          </div>
+        <Detail label={t("address")}>{abha?.address}</Detail>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Detail label={t("district")}>{abha?.district}</Detail>
+          <Detail label={t("state")}>{abha?.state}</Detail>
+          <Detail label={t("pincode")}>{abha?.pincode}</Detail>
         </div>
-        <div className="grid sm:grid-cols-3 gap-4">
-          <div>
-            <h4 className="text-xs text-secondary-700">{t("district")}</h4>
-            <p>{memory?.abhaNumber.district ?? "-"}</p>
-          </div>
-          <div>
-            <h4 className="text-xs text-secondary-700">{t("state")}</h4>
-            <p>{memory?.abhaNumber.state ?? "-"}</p>
-          </div>
-          <div>
-            <h4 className="text-xs text-secondary-700">{t("pincode")}</h4>
-            <p>{memory?.abhaNumber.pincode ?? "-"}</p>
-          </div>
-        </div>
-        <div className="grid sm:grid-cols-2 gap-4">
-          <div>
-            <h4 className="text-xs text-secondary-700">{t("mobile_number")}</h4>
-            <p>{memory?.abhaNumber.mobile ?? "-"}</p>
-          </div>
-          <div>
-            <h4 className="text-xs text-secondary-700">{t("email")}</h4>
-            <p>{memory?.abhaNumber.email ?? "-"}</p>
-          </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Detail label={t("mobile_number")}>{abha?.mobile}</Detail>
+          <Detail label={t("email")}>{abha?.email}</Detail>
         </div>
       </div>
-      <div className="mt-4 flex flex-col items-center justify-center gap-4">
-        <div className="flex items-center gap-2 w-full max-sm:flex-col">
+      <div className="flex flex-col gap-3">
+        <div className="flex gap-3 max-sm:flex-col">
           <Button
             type="button"
-            variant="secondary"
+            variant="outline"
             onClick={() => downloadAbhaCard("png")}
-            className="flex items-center gap-2 flex-1 w-full"
+            className="flex-1"
           >
-            <ImageDownIcon className="h-4 w-4" />
+            <ImageDownIcon />
             {t("download_abha_card")}
           </Button>
           <Button
             type="button"
-            variant="secondary"
+            variant="outline"
             onClick={() => downloadAbhaCard("pdf")}
-            className="flex items-center gap-2 flex-1 w-full"
+            className="flex-1"
           >
-            <FileDownIcon className="h-4 w-4" />
+            <FileDownIcon />
             {t("print_abha_card")}
           </Button>
         </div>
@@ -263,7 +194,6 @@ export const AbhaProfile: FC<AbhaProfileProps> = ({ memory, onSuccess }) => {
         {onSuccess && (
           <Button
             type="button"
-            variant="secondary"
             className="w-full"
             onClick={() => {
               if (!memory?.abhaNumber) {

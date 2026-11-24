@@ -1,314 +1,250 @@
-// src/components/multi-select.tsx
-
+import { ChevronDown } from "lucide-react";
 import * as React from "react";
-import { CheckIcon, ChevronDown, XIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
-import { cn } from "@/lib/utils";
-import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+  Combobox,
+  ComboboxCollection,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxGroup,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxLabel,
+  ComboboxList,
+  ComboboxTrigger,
+} from "@/components/ui/combobox";
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-  CommandSeparator,
-} from "@/components/ui/command";
+  Drawer,
+  DrawerContent,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
+import {
+  fieldTriggerLayout,
+  fieldTriggerSurface,
+  invalidTriggerRing,
+  triggerFocus,
+} from "@/components/ui/field-trigger-styles";
+import { Label } from "@/components/ui/label";
+import useBreakpoints from "@/hooks/useBreakpoints";
+import { I18NNAMESPACE } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 
-/**
- * Props for MultiSelect component
- */
-interface MultiSelectProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  /**
-   * An array of option objects to be displayed in the multi-select component.
-   * Each option object has a label, value, and an optional icon.
-   */
-  options: {
-    /** The text to display for the option. */
-    label: string;
-    /** The unique value associated with the option. */
-    value: string;
-    /** Optional icon component to display alongside the option. */
-    icon?: React.ComponentType<{ className?: string }>;
-  }[];
-
-  /**
-   * Callback function triggered when the selected values change.
-   * Receives an array of the new selected values.
-   */
+type TriggerProps = Omit<
+  React.ComponentProps<"button">,
+  keyof MultiSelectProps
+>;
+interface MultiSelectProps {
+  options: { label: string; value: string; icon?: React.ReactNode }[];
   onValueChange: (value: string[]) => void;
-
-  /** The default selected values when the component mounts. */
-  defaultValue?: string[];
-
-  /**
-   * Placeholder text to be displayed when no values are selected.
-   * Optional, defaults to "Select options".
-   */
-  placeholder?: string;
-
-  /**
-   * Maximum number of items to display. Extra selected items will be summarized.
-   * Optional, defaults to 3.
-   */
-  maxCount?: number;
-
-  /**
-   * The modality of the popover. When set to true, interaction with outside elements
-   * will be disabled and only popover content will be visible to screen readers.
-   * Optional, defaults to false.
-   */
-  modalPopover?: boolean;
-
-  /**
-   * If true, renders the multi-select component as a child of another component.
-   * Optional, defaults to false.
-   */
-  asChild?: boolean;
-
-  /**
-   * Additional class names to apply custom styles to the multi-select component.
-   * Optional, can be used to add custom styles.
-   */
+  value: string[];
+  placeholder: string;
   className?: string;
+  selectionSummary?: string;
+  translationBasekey?: string;
 }
 
-export const MultiSelect = React.forwardRef<
-  HTMLButtonElement,
-  MultiSelectProps
->(
-  (
-    {
-      options,
-      onValueChange,
-      defaultValue = [],
-      placeholder = "Select options",
-      maxCount = 3,
-      modalPopover = false,
-      asChild = false,
-      className,
-      ...props
-    },
-    ref
-  ) => {
-    const [selectedValues, setSelectedValues] =
-      React.useState<string[]>(defaultValue);
-    const [isPopoverOpen, setIsPopoverOpen] = React.useState(false);
+export function MultiSelect({
+  options,
+  onValueChange,
+  value = [],
+  placeholder,
+  className,
+  ref,
+  selectionSummary,
+  translationBasekey,
+  ...props
+}: TriggerProps & MultiSelectProps) {
+  const { t } = useTranslation(I18NNAMESPACE);
+  const [selectedValues, setSelectedValues] = React.useState<string[]>(value);
+  const [open, setOpen] = React.useState(false);
+  const isMobile = useBreakpoints({ default: true, sm: false });
+  const selectAllId = React.useId();
 
-    const handleInputKeyDown = (
-      event: React.KeyboardEvent<HTMLInputElement>
-    ) => {
-      if (event.key === "Enter") {
-        setIsPopoverOpen(true);
-      } else if (event.key === "Backspace" && !event.currentTarget.value) {
-        const newSelectedValues = [...selectedValues];
-        newSelectedValues.pop();
-        setSelectedValues(newSelectedValues);
-        onValueChange(newSelectedValues);
-      }
-    };
-
-    const toggleOption = (option: string) => {
-      const newSelectedValues = selectedValues.includes(option)
-        ? selectedValues.filter((value) => value !== option)
-        : [...selectedValues, option];
-      setSelectedValues(newSelectedValues);
-      onValueChange(newSelectedValues);
-    };
-
-    const handleClear = () => {
-      setSelectedValues([]);
-      onValueChange([]);
-    };
-
-    const handleTogglePopover = () => {
-      setIsPopoverOpen((prev) => !prev);
-    };
-
-    const clearExtraOptions = () => {
-      const newSelectedValues = selectedValues.slice(0, maxCount);
-      setSelectedValues(newSelectedValues);
-      onValueChange(newSelectedValues);
-    };
-
-    const toggleAll = () => {
-      if (selectedValues.length === options.length) {
-        handleClear();
-      } else {
-        const allValues = options.map((option) => option.value);
-        setSelectedValues(allValues);
-        onValueChange(allValues);
-      }
-    };
-
-    return (
-      <Popover
-        open={isPopoverOpen}
-        onOpenChange={setIsPopoverOpen}
-        modal={modalPopover}
-      >
-        <PopoverTrigger asChild>
-          <Button
-            ref={ref}
-            {...props}
-            onClick={handleTogglePopover}
-            className={cn(
-              "flex w-full p-1 rounded-md border min-h-10 h-auto items-center justify-between bg-inherit hover:bg-inherit [&_svg]:pointer-events-auto",
-              className
-            )}
-          >
-            {selectedValues.length > 0 ? (
-              <div className="flex justify-between items-center w-full">
-                <div className="flex flex-wrap items-center gap-1.5">
-                  {selectedValues.slice(0, maxCount).map((value) => {
-                    const option = options.find((o) => o.value === value);
-                    const IconComponent = option?.icon;
-                    return (
-                      <Badge key={value}>
-                        {IconComponent && (
-                          <IconComponent className="h-4 w-4 mr-2" />
-                        )}
-                        {option?.label}
-                        <XIcon
-                          className="ml-2 h-4 w-4 cursor-pointer"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            toggleOption(value);
-                          }}
-                        />
-                      </Badge>
-                    );
-                  })}
-                  {selectedValues.length > maxCount && (
-                    <Badge>
-                      {`+ ${selectedValues.length - maxCount} more`}
-                      <XIcon
-                        className="ml-2 h-4 w-4 cursor-pointer"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          clearExtraOptions();
-                        }}
-                      />
-                    </Badge>
-                  )}
-                </div>
-                <div className="flex items-center justify-between text-black">
-                  <XIcon
-                    className="h-4 mx-2 cursor-pointer"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      handleClear();
-                    }}
-                  />
-                  <Separator
-                    orientation="vertical"
-                    className="flex min-h-6 h-full"
-                  />
-                  <ChevronDown className="h-4 mx-2 cursor-pointer" />
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center justify-between w-full mx-auto text-black">
-                <span className="text-sm mx-3 text-secondary-600">
-                  {placeholder}
-                </span>
-                <ChevronDown className="h-4 cursor-pointer mx-2" />
-              </div>
-            )}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent
-          align="start"
-          className="p-0"
-          onEscapeKeyDown={() => setIsPopoverOpen(false)}
-        >
-          <Command>
-            <CommandInput
-              placeholder="Search..."
-              className="border-none shadow-none"
-              onKeyDown={handleInputKeyDown}
-            />
-            <CommandList className="max-h-96">
-              <CommandEmpty>No results found.</CommandEmpty>
-              <CommandGroup>
-                <CommandItem
-                  key="all"
-                  onSelect={toggleAll}
-                  className="cursor-pointer"
-                >
-                  <div
-                    className={cn(
-                      "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border",
-                      selectedValues.length === options.length
-                        ? "bg-primary"
-                        : "[&_svg]:invisible"
-                    )}
-                  >
-                    <CheckIcon className="h-4 w-4 text-white" />
-                  </div>
-                  <span>(Select All)</span>
-                </CommandItem>
-                {options.map((option) => {
-                  const isSelected = selectedValues.includes(option.value);
-                  return (
-                    <CommandItem
-                      key={option.value}
-                      onSelect={() => toggleOption(option.value)}
-                      className="cursor-pointer"
-                    >
-                      <div
-                        className={cn(
-                          "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border",
-                          isSelected ? "bg-primary" : "[&_svg]:invisible"
-                        )}
-                      >
-                        <CheckIcon className="h-4 w-4 text-white" />
-                      </div>
-                      {option.icon && <option.icon className="mr-2 h-4 w-4" />}
-                      <span>{option.label}</span>
-                    </CommandItem>
-                  );
-                })}
-              </CommandGroup>
-              <CommandSeparator />
-              <CommandGroup>
-                <div className="flex items-center justify-between">
-                  {selectedValues.length > 0 && (
-                    <>
-                      <CommandItem
-                        onSelect={handleClear}
-                        className="flex-1 justify-center cursor-pointer text-black"
-                      >
-                        Clear
-                      </CommandItem>
-                      <Separator
-                        orientation="vertical"
-                        className="flex min-h-6 h-full"
-                      />
-                    </>
-                  )}
-                  <CommandItem
-                    onSelect={() => setIsPopoverOpen(false)}
-                    className="flex-1 justify-center cursor-pointer max-w-full text-black"
-                  >
-                    Close
-                  </CommandItem>
-                </div>
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
-    );
+  // Re-sync the draft only when the contents of `value` change
+  const valueKey = JSON.stringify([...value].sort());
+  const [syncedValueKey, setSyncedValueKey] = React.useState(valueKey);
+  if (syncedValueKey !== valueKey) {
+    setSyncedValueKey(valueKey);
+    setSelectedValues(value);
   }
-);
 
-MultiSelect.displayName = "MultiSelect";
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (nextOpen) {
+      setSelectedValues(value);
+    } else if (open) {
+      onValueChange(selectedValues);
+    }
+    setOpen(nextOpen);
+  };
+
+  const optionByValue = new Map(
+    options.map((option) => [option.value, option]),
+  );
+  const committed = new Set(value);
+  const draft = new Set(selectedValues);
+  const groups = [
+    { value: "selected", items: value },
+    {
+      value: "available",
+      items: [...optionByValue.keys()].filter((item) => !committed.has(item)),
+    },
+  ].filter((group) => group.items.length > 0);
+  const allSelected =
+    options.length > 0 && options.every((option) => draft.has(option.value));
+
+  const trigger = (
+    <button
+      type="button"
+      ref={ref}
+      role="combobox"
+      aria-expanded={open}
+      className={cn(
+        fieldTriggerLayout,
+        fieldTriggerSurface,
+        triggerFocus,
+        invalidTriggerRing,
+        "h-auto min-h-12 w-full min-w-0 justify-between py-1 text-start font-normal md:h-auto md:min-h-10",
+        className,
+      )}
+      {...props}
+    >
+      {value.length === 0 ? (
+        <span className="truncate text-muted-foreground">{placeholder}</span>
+      ) : selectionSummary ? (
+        <Badge
+          variant="neutral"
+          className="min-w-0 shrink whitespace-normal wrap-anywhere"
+        >
+          {selectionSummary}
+        </Badge>
+      ) : (
+        <span className="flex min-w-0 flex-wrap gap-1">
+          {value.map((item) => (
+            <Badge
+              key={item}
+              variant="neutral"
+              className="max-w-full whitespace-normal wrap-anywhere"
+            >
+              {optionByValue.get(item)?.label ?? item}
+            </Badge>
+          ))}
+        </span>
+      )}
+      <ChevronDown
+        aria-hidden="true"
+        className="size-4 shrink-0 text-muted-foreground"
+      />
+    </button>
+  );
+
+  const content = (
+    <>
+      <ComboboxInput
+        showTrigger={false}
+        placeholder={
+          translationBasekey
+            ? t(`search_${translationBasekey}`)
+            : t("search_options")
+        }
+        aria-label={
+          translationBasekey
+            ? t(`search_${translationBasekey}`)
+            : t("search_options")
+        }
+      />
+      <div
+        className={cn(
+          "flex items-center gap-2 border-b border-border px-3 py-2",
+          isMobile && "min-h-11",
+        )}
+      >
+        <Checkbox
+          id={selectAllId}
+          checked={allSelected}
+          onCheckedChange={() =>
+            setSelectedValues(
+              allSelected
+                ? []
+                : [...new Set([...draft, ...optionByValue.keys()])],
+            )
+          }
+        />
+        <Label htmlFor={selectAllId}>{t("select_all")}</Label>
+      </div>
+      <ComboboxEmpty>{t("no_results_found")}</ComboboxEmpty>
+      <ComboboxList showScrollbar className="min-h-0 flex-1">
+        {(group: { value: string; items: string[] }) => (
+          <ComboboxGroup key={group.value} items={group.items}>
+            {group.value === "selected" && (
+              <ComboboxLabel>{t("selected")}</ComboboxLabel>
+            )}
+            <ComboboxCollection>
+              {(optionValue: string) => {
+                const option = optionByValue.get(optionValue);
+                return (
+                  <ComboboxItem
+                    key={optionValue}
+                    value={optionValue}
+                    className={cn(isMobile && "min-h-11 py-2.5")}
+                  >
+                    {option?.icon}
+                    {option?.label ?? optionValue}
+                  </ComboboxItem>
+                );
+              }}
+            </ComboboxCollection>
+          </ComboboxGroup>
+        )}
+      </ComboboxList>
+      <div className="flex shrink-0 justify-end gap-2 border-t border-border p-2">
+        <Button onClick={() => handleOpenChange(false)}>{t("done")}</Button>
+      </div>
+    </>
+  );
+
+  return (
+    <Combobox<string, true>
+      multiple
+      items={groups}
+      value={selectedValues}
+      onValueChange={setSelectedValues}
+      itemToStringLabel={(optionValue) =>
+        optionByValue.get(optionValue)?.label ?? optionValue
+      }
+      open={open}
+      inline={isMobile}
+      disabled={props.disabled}
+      onOpenChange={(nextOpen, details) => {
+        if (!nextOpen && details.reason === "item-press") {
+          details.cancel();
+          return;
+        }
+        handleOpenChange(nextOpen);
+      }}
+    >
+      {isMobile ? (
+        <Drawer open={open} onOpenChange={handleOpenChange}>
+          <DrawerTrigger asChild>{trigger}</DrawerTrigger>
+          <DrawerContent height="fixed">
+            <DrawerTitle className="sr-only">{placeholder}</DrawerTitle>
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-2 pb-0">
+              {content}
+            </div>
+          </DrawerContent>
+        </Drawer>
+      ) : (
+        <>
+          <ComboboxTrigger render={trigger} showChevron={false} />
+          <ComboboxContent className="flex w-(--anchor-width) flex-col">
+            {content}
+          </ComboboxContent>
+        </>
+      )}
+    </Combobox>
+  );
+}

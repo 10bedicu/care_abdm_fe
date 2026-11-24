@@ -9,10 +9,10 @@ import {
   SCAN_PAY_ORDERS_QUERY_KEY,
   useScanPayOrderActions,
 } from "@/components/scan-pay/ScanPayOrderActions";
-import { Button } from "@/components/ui/button";
+import { AbdmScope } from "@/components/AbdmScope";
+import { HostMenuItem } from "@/components/common/HostMenuItem";
 import { I18NNAMESPACE } from "@/lib/constants";
 import { useScanPayManualActions } from "@/lib/pluginConfig";
-import { cn } from "@/lib/utils";
 import { WithMeta } from "@/types/meta";
 import { PaymentOrder } from "@/types/paymentOrder";
 
@@ -21,10 +21,6 @@ type InvoiceRecordPaymentOptionsProps = {
   invoice: { id: string };
   className?: string;
 };
-
-// rendered inside the host's dropdown, so items are plain buttons styled as menu rows
-const itemClassName =
-  "relative flex w-full cursor-default select-none items-center justify-start gap-2 rounded-sm px-2 py-1.5 text-sm font-normal outline-hidden transition-colors hover:bg-gray-100 focus:bg-gray-100 focus:text-gray-900 disabled:pointer-events-none disabled:opacity-50 [&>svg]:size-4 [&>svg]:shrink-0";
 
 const InvoiceRecordPaymentOptions: FC<
   WithMeta<InvoiceRecordPaymentOptionsProps>
@@ -54,35 +50,30 @@ const InvoiceRecordPaymentOptions: FC<
   }
 
   return (
-    <div className={cn("abdm-container w-full", className)}>
-      <Button
-        variant="ghost"
-        size="sm"
-        className={itemClassName}
+    <AbdmScope>
+      <HostMenuItem
+        className={className}
         loading={checkStatus.isPending}
         onClick={() => checkStatus.mutate(order)}
       >
         {t("scan_pay__check_status_menu")}
-      </Button>
+      </HostMenuItem>
       {manualActions.markPaid && (
-        <Button
-          variant="ghost"
-          size="sm"
-          className={itemClassName}
+        <HostMenuItem
+          className={className}
           onClick={() => setMarkingPaid(order)}
         >
           {t("scan_pay__mark_paid_menu")}
-        </Button>
+        </HostMenuItem>
       )}
       {manualActions.cancelOrder && (
-        <Button
-          variant="ghost"
-          size="sm"
-          className={cn(itemClassName, "text-red-600 hover:text-red-700")}
+        <HostMenuItem
+          variant="destructive"
+          className={className}
           onClick={() => setCancelling(order)}
         >
           {t("scan_pay__cancel_order_menu")}
-        </Button>
+        </HostMenuItem>
       )}
 
       <CancelOrderDialog
@@ -101,7 +92,7 @@ const InvoiceRecordPaymentOptions: FC<
         }
         loading={markPaid.isPending}
       />
-    </div>
+    </AbdmScope>
   );
 };
 

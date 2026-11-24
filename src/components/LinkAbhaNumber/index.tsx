@@ -1,30 +1,31 @@
-import { Button, ButtonProps, buttonVariants } from "@/components/ui/button";
-import { ChevronLeftIcon, IdCardIcon } from "lucide-react";
+import { ChevronLeftIcon, IdCardIcon, XIcon } from "lucide-react";
+import { FC, createContext, useContext, useState } from "react";
+import { Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
+
+import { apis } from "@/apis";
+import { AbdmScope } from "@/components/AbdmScope";
+import { Button, ButtonProps } from "@/components/ui/button";
 import {
   Drawer,
+  DrawerClose,
   DrawerContent,
   DrawerDescription,
-  DrawerHeader,
   DrawerTitle,
-  DrawerTrigger,
 } from "@/components/ui/drawer";
-import { FC, createContext, useContext, useState } from "react";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-
+import { I18NNAMESPACE } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 import { AbhaNumber } from "@/types/abhaNumber";
 import { HealthFacility } from "@/types/healthFacility";
-import { Link } from "@tanstack/react-router";
-import { LinkAbhaForm } from "./LinkAbhaForm";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { User } from "@/types/user";
-import { apis } from "@/apis";
-import { cn } from "@/lib/utils";
-import { useQuery } from "@tanstack/react-query";
+
+import { LinkAbhaForm } from "./LinkAbhaForm";
 
 type LinkAbhaNumberContextValue = {
   healthFacility?: HealthFacility;
@@ -33,22 +34,29 @@ type LinkAbhaNumberContextValue = {
 
 const LinkAbhaNumberContext = createContext<LinkAbhaNumberContextValue>({});
 
-type LinkAbhaNumberProps = ButtonProps & {
+type LinkAbhaNumberProps = Omit<ButtonProps, "onClick" | "children"> & {
   enforceLinking?: boolean;
   backUrl?: string;
   facilityId?: string;
   onSuccess: (abhaNumber: AbhaNumber) => void;
 };
 
+/** Tall enough for every step, so the drawer keeps its height between steps. */
+const DRAWER_HEIGHT =
+  "data-[swipe-axis=y]:h-[calc(90dvh+var(--drawer-keyboard-inset,0px))]";
+
+/** The centred column the header and the form share. */
+const COLUMN = "mx-auto w-full max-w-lg px-4";
+
 export const LinkAbhaNumber: FC<LinkAbhaNumberProps> = ({
   facilityId,
   onSuccess,
   backUrl,
   enforceLinking = false,
-  defaultMode = "existing",
   className,
   ...props
 }) => {
+  const { t } = useTranslation(I18NNAMESPACE);
   const [isDrawerOpen, setIsDrawerOpen] = useState(enforceLinking);
 
   const handleOnSuccess = (abhaNumber: AbhaNumber) => {
@@ -67,6 +75,19 @@ export const LinkAbhaNumber: FC<LinkAbhaNumberProps> = ({
     enabled: !!facilityId,
   });
 
+  const trigger = (
+    <Button
+      type="button"
+      {...props}
+      className={cn("w-full", className)}
+      disabled={!healthFacility}
+      onClick={() => setIsDrawerOpen(true)}
+    >
+      <IdCardIcon />
+      Generate/Link ABHA Number
+    </Button>
+  );
+
   return (
     <LinkAbhaNumberContext.Provider
       value={{
@@ -74,78 +95,76 @@ export const LinkAbhaNumber: FC<LinkAbhaNumberProps> = ({
         currentUser,
       }}
     >
-      <Drawer
-        dismissible={!enforceLinking}
-        open={isDrawerOpen}
-        onOpenChange={setIsDrawerOpen}
-      >
-        <DrawerTrigger
-          disabled={!healthFacility}
-          className="abdm-container w-full"
+      <AbdmScope>
+        {healthFacility ? (
+          trigger
+        ) : (
+          <Tooltip>
+            {/* A disabled button has no pointer events; the wrapper takes the hover. */}
+            <TooltipTrigger asChild>
+              <span className="block w-full">{trigger}</span>
+            </TooltipTrigger>
+            <TooltipContent>
+              Abha linking is disabled for this facility as it doesn't have
+              health facility id configured.
+            </TooltipContent>
+          </Tooltip>
+        )}
+        <Drawer
+          open={isDrawerOpen}
+          onOpenChange={setIsDrawerOpen}
+          showSwipeHandle={!enforceLinking}
         >
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger className="abdm-container w-full">
-                <Button
-                  type="button"
-                  className={cn(className, "w-full")}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    setIsDrawerOpen(true);
-                  }}
-                  disabled={!healthFacility}
-                  {...props}
-                >
-                  <span>
-                    <IdCardIcon />
-                  </span>
-                  Generate/Link ABHA Number
-                </Button>
-              </TooltipTrigger>
-              {!healthFacility && (
-                <TooltipContent className="abdm-container">
-                  <p>
-                    Abha linking is disabled for this facility as it doesn't
-                    have health facility id configured.
-                  </p>
-                </TooltipContent>
+          <DrawerContent
+            className={DRAWER_HEIGHT}
+            // When linking is enforced, the drawer only closes on success or "Go back".
+            data-base-ui-swipe-ignore={enforceLinking ? "" : undefined}
+            onEscapeKeyDown={(event) => enforceLinking && event.preventDefault()}
+            onInteractOutside={(event) =>
+              enforceLinking && event.preventDefault()
+            }
+          >
+            <div
+              className={cn(
+                COLUMN,
+                "flex shrink-0 items-center justify-between gap-3 py-2 md:py-4",
+                // "Go back" takes a row of its own on small screens.
+                backUrl && "max-sm:flex-wrap",
               )}
-            </Tooltip>
-          </TooltipProvider>
-        </DrawerTrigger>
-        <DrawerContent className="abdm-container">
-          <ScrollArea className="h-[90vh]">
-            <div className="md:mx-auto max-w-screen md:max-w-md max-md:p-4">
-              <DrawerHeader className="flex justify-between items-center max-sm:flex-col">
-                <div className="flex-1">
-                  <DrawerTitle>Generate/Link ABHA Number</DrawerTitle>
-                  <DrawerDescription>
-                    Generate/link patient's ABHA details for easy access to
-                    healthcare services.
-                  </DrawerDescription>
-                </div>
-
-                {backUrl && (
-                  <Link
-                    to={backUrl}
-                    className={cn(
-                      buttonVariants({ variant: "outline" }),
-                      "max-sm:w-full",
-                    )}
-                  >
-                    <ChevronLeftIcon className="h-4 w-4" />
+            >
+              <div className="min-w-0">
+                <DrawerTitle>Generate/Link ABHA Number</DrawerTitle>
+                <DrawerDescription>
+                  Generate/link patient's ABHA details for easy access to
+                  healthcare services.
+                </DrawerDescription>
+              </div>
+              {backUrl ? (
+                <Button asChild variant="outline" className="max-sm:w-full">
+                  <Link to={backUrl}>
+                    <ChevronLeftIcon />
                     Go back
                   </Link>
-                )}
-              </DrawerHeader>
-              <div className="pb-6 pr-3">
+                </Button>
+              ) : (
+                !enforceLinking && (
+                  <DrawerClose asChild>
+                    <Button variant="ghost" size="icon" className="shrink-0">
+                      <XIcon />
+                      <span className="sr-only">{t("close")}</span>
+                    </Button>
+                  </DrawerClose>
+                )
+              )}
+            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+              <div className={cn(COLUMN, "pt-2 pb-8")}>
                 <LinkAbhaForm onSuccess={handleOnSuccess} />
               </div>
             </div>
-          </ScrollArea>
-        </DrawerContent>
-      </Drawer>
+          </DrawerContent>
+        </Drawer>
+      </AbdmScope>
     </LinkAbhaNumberContext.Provider>
   );
 };

@@ -1,9 +1,10 @@
 import { FC, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import { AbdmScope } from "@/components/AbdmScope";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { I18NNAMESPACE } from "@/lib/constants";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { LinkAbhaNumber } from "../LinkAbhaNumber";
 import { ShowAbhaProfile } from "../LinkAbhaNumber/ShowAbhaProfile";
 import { UseFormReturn } from "react-hook-form";
@@ -98,114 +99,124 @@ const PatientRegistrationForm: FC<WithMeta<PatientRegistrationFormProps>> = ({
 
   if (!abhaId && !abhaNumber) {
     return (
-      <div className="abdm-container flex justify-end w-full">
-        <LinkAbhaNumber
-          enforceLinking={__meta?.config?.enforceAbhaNumberLinking}
-          backUrl={
-            __meta?.config?.enforceAbhaNumberLinking
-              ? `/facility/${facilityId}/patients`
-              : undefined
+      <LinkAbhaNumber
+        enforceLinking={__meta?.config?.enforceAbhaNumberLinking}
+        backUrl={
+          __meta?.config?.enforceAbhaNumberLinking
+            ? `/facility/${facilityId}/patients`
+            : undefined
+        }
+        facilityId={facilityId}
+        variant="outline_primary"
+        onSuccess={(abhaNumber) => {
+          form.setValue("abha", abhaNumber, setFormValueOpts);
+
+          form.setValue("abha_id", abhaNumber.external_id, setFormValueOpts);
+          form.setValue(
+            "abha_number",
+            abhaNumber.abha_number,
+            setFormValueOpts,
+          );
+          form.setValue(
+            "abha_address",
+            abhaNumber.health_id,
+            setFormValueOpts,
+          );
+
+          if (patientId) {
+            linkAbhaNumberAndPatientMutation.mutate({
+              patient: patientId,
+              abha_number: form.getValues("abha_id"),
+            });
+            return;
           }
-          facilityId={facilityId}
-          type="button"
-          variant="outline"
-          className="text-primary border-primary-400"
-          onSuccess={(abhaNumber) => {
-            form.setValue("abha", abhaNumber, setFormValueOpts);
 
-            form.setValue("abha_id", abhaNumber.external_id, setFormValueOpts);
-            form.setValue(
-              "abha_number",
-              abhaNumber.abha_number,
-              setFormValueOpts,
-            );
-            form.setValue(
-              "abha_address",
-              abhaNumber.health_id,
-              setFormValueOpts,
-            );
+          form.setValue("name", abhaNumber.name, setFormValueOpts);
+          form.setValue(
+            "phone_number",
+            "+91" + abhaNumber.mobile?.replace("+91", ""),
+            setFormValueOpts,
+          );
+          form.setValue("age_or_dob", "dob", setFormValueOpts);
+          form.setValue(
+            "date_of_birth",
+            abhaNumber.date_of_birth,
+            setFormValueOpts,
+          );
+          form.setValue("blood_group", "unknown", setFormValueOpts);
+          form.setValue(
+            "gender",
+            { M: "male", F: "female", O: "transgender" }[abhaNumber.gender] ??
+              "transgender",
+            setFormValueOpts,
+          );
+          const address = abhaNumber.address?.trim();
+          if (address) {
+            form.setValue("address", address, setFormValueOpts);
+            form.setValue("permanent_address", address, setFormValueOpts);
+          }
 
-            if (patientId) {
-              linkAbhaNumberAndPatientMutation.mutate({
-                patient: patientId,
-                abha_number: form.getValues("abha_id"),
-              });
-              return;
-            }
+          const pincode = abhaNumber.pincode?.trim();
+          if (pincode) {
+            form.setValue("pincode", Number(pincode), setFormValueOpts);
+          }
 
-            form.setValue("name", abhaNumber.name, setFormValueOpts);
-            form.setValue(
-              "phone_number",
-              "+91" + abhaNumber.mobile?.replace("+91", ""),
-              setFormValueOpts,
-            );
-            form.setValue("age_or_dob", "dob", setFormValueOpts);
-            form.setValue(
-              "date_of_birth",
-              abhaNumber.date_of_birth,
-              setFormValueOpts,
-            );
-            form.setValue("blood_group", "unknown", setFormValueOpts);
-            form.setValue(
-              "gender",
-              { M: "male", F: "female", O: "transgender" }[abhaNumber.gender] ??
-                "transgender",
-              setFormValueOpts,
-            );
-            const address = abhaNumber.address?.trim();
-            if (address) {
-              form.setValue("address", address, setFormValueOpts);
-              form.setValue("permanent_address", address, setFormValueOpts);
-            }
-
-            const pincode = abhaNumber.pincode?.trim();
-            if (pincode) {
-              form.setValue("pincode", Number(pincode), setFormValueOpts);
-            }
-
-            if (abhaNumber.district) {
-              autofillGeoOrganizationMutation.mutate({
-                org_type: "govt",
-                name: abhaNumber.district,
-                limit: 1,
-              });
-            }
-          }}
-        />
-      </div>
+          if (abhaNumber.district) {
+            autofillGeoOrganizationMutation.mutate({
+              org_type: "govt",
+              name: abhaNumber.district,
+              limit: 1,
+            });
+          }
+        }}
+      />
     );
   }
 
   const abhaProfile = abhaNumber || form.getValues("abha");
 
   return (
-    <div id="abha-info" className="abdm-container space-y-6">
-      <div>
-        <h2 className="text-lg font-semibold">ABHA Info</h2>
-        <div className="text-sm">
-          ABHA ID is part of an ABDM's initiative to enhance patient care and
-          improve patient outcomes.
+    <AbdmScope>
+      {/* A card like the host's "Patient Basics" and "Additional Details". */}
+      <section
+        id="abha-info"
+        className="flex flex-col gap-4 rounded-md bg-card p-6 text-card-foreground shadow"
+      >
+        <div>
+          <h5 className="text-lg font-semibold">ABHA Info</h5>
+          <p className="text-sm text-muted-foreground">
+            ABHA ID is part of an ABDM's initiative to enhance patient care and
+            improve patient outcomes.
+          </p>
         </div>
-      </div>
 
-      <div className="space-y-1">
-        <Label>ABHA Number</Label>
-        <Input
-          value={abhaNumber?.abha_number || form.watch("abha_number") || ""}
-          disabled
-        />
-      </div>
+        <div className="flex flex-col gap-6 px-1">
+          <Field>
+            <FieldLabel htmlFor="abha-info-number">ABHA Number</FieldLabel>
+            <Input
+              id="abha-info-number"
+              value={abhaNumber?.abha_number || form.watch("abha_number") || ""}
+              disabled
+            />
+          </Field>
 
-      <div className="space-y-1">
-        <Label>ABHA Address</Label>
-        <Input
-          value={abhaNumber?.health_id || form.watch("abha_address") || ""}
-          disabled
-        />
-      </div>
+          <Field>
+            <FieldLabel htmlFor="abha-info-address">ABHA Address</FieldLabel>
+            <Input
+              id="abha-info-address"
+              value={abhaNumber?.health_id || form.watch("abha_address") || ""}
+              disabled
+            />
+          </Field>
 
-      {abhaProfile && <ShowAbhaProfile abhaNumber={abhaProfile} />}
-    </div>
+          {abhaProfile && (
+            <div>
+              <ShowAbhaProfile abhaNumber={abhaProfile} />
+            </div>
+          )}
+        </div>
+      </section>
+    </AbdmScope>
   );
 };
 

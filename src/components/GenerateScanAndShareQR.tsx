@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/form";
 
 import { Button } from "./ui/button";
+import { DownloadIcon } from "lucide-react";
 import { I18NNAMESPACE } from "@/lib/constants";
 import { Input } from "@/components/ui/input";
 import { QRCodeSVG } from "qrcode.react";
@@ -91,36 +92,31 @@ export const GenerateScanAndShareQR: FC<GenerateScanAndShareQRProps> = ({
 
   if (!scanAndShareUrl) {
     return (
-      <div className="mt-10 flex flex-col items-center justify-center gap-2.5">
-        <p className="font-semibold text-secondary-600">
-          {t("scan_and_share_qr_not_available")}
-        </p>
-      </div>
+      <p className="border-t border-border pt-6 text-center text-sm font-medium text-muted-foreground">
+        {t("scan_and_share_qr_not_available")}
+      </p>
     );
   }
 
   return (
     <Form {...scanAndShareQrForm}>
-      <div className="space-y-4 mt-10">
+      <div className="space-y-5 border-t border-border pt-6">
         <div>
-          <h2 className="text-lg font-medium">
+          <h3 className="text-base font-semibold">
             {t("generate_scan_and_share_qr")}
-          </h2>
-          <p className="text-sm text-secondary-700">
+          </h3>
+          <p className="text-sm text-muted-foreground">
             {t("generate_scan_and_share_qr_description")}
           </p>
         </div>
 
-        <form className="space-y-8">
+        <form onSubmit={(e) => e.preventDefault()}>
           <FormField
             control={scanAndShareQrForm.control}
             name="counterName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>
-                  {t("counter_name")}
-                  <span className="text-red-500 text-sm">*</span>
-                </FormLabel>
+                <FormLabel aria-required>{t("counter_name")}</FormLabel>
                 <FormControl>
                   <Input
                     placeholder={t("counter_name_placeholder")}
@@ -137,16 +133,21 @@ export const GenerateScanAndShareQR: FC<GenerateScanAndShareQRProps> = ({
         </form>
 
         {!!scanAndShareQrForm.watch("counterName") && scanAndShareQrValue && (
-          <div className="grid gap-3 items-center justify-center w-full">
-            <QRCodeSVG
-              value={scanAndShareQrValue}
-              className="size-96"
-              ref={qrRef}
-            />
+          <div className="mx-auto flex w-full max-w-96 flex-col gap-3">
+            {/* Always on white: a QR code needs the contrast to scan. */}
+            <div className="rounded-lg border border-border bg-white p-4">
+              <QRCodeSVG
+                value={scanAndShareQrValue}
+                className="h-auto w-full"
+                ref={qrRef}
+              />
+            </div>
             <Button
-              className="w-96"
+              type="button"
+              className="w-full"
               onClick={scanAndShareQrForm.handleSubmit(onSubmit)}
             >
+              <DownloadIcon />
               {t("download_qr_code")}
             </Button>
           </div>

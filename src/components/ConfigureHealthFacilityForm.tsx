@@ -15,7 +15,6 @@ import {
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Trans, useTranslation } from "react-i18next";
@@ -124,15 +123,17 @@ export const ConfigureHealthFacilityForm: FC<ConfigureHealthFacilityFormProps> =
     }
   }
 
+  const registered = !!healthFacility?.registered;
+
   return (
-    <div className="grid gap-4">
+    <div className="flex flex-col gap-8">
       <Form {...form}>
         <form
           onSubmit={(e) => {
             e.stopPropagation();
             form.handleSubmit(onSubmit)(e);
           }}
-          className="space-y-4"
+          className="space-y-5"
         >
           <FormField
             control={form.control}
@@ -140,69 +141,56 @@ export const ConfigureHealthFacilityForm: FC<ConfigureHealthFacilityFormProps> =
             render={({ field }) => (
               <FormItem>
                 <FormLabel>{t("health_facility__hf_id")}</FormLabel>
-                <FormControl>
-                  <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
+                  <FormControl>
                     <Input {...field} />
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div
-                            className={
-                              healthFacility?.registered
-                                ? "text-primary-500 cursor-pointer"
-                                : "text-warning-500 cursor-pointer"
-                            }
-                          >
-                            {healthFacility?.registered ? (
-                              <CircleCheckIcon className="size-6" />
-                            ) : (
-                              <CircleAlertIcon className="size-6" />
-                            )}
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          {healthFacility?.registered ? (
-                            <div className="flex flex-col text-gray-300">
-                              <span className="font-semibold text-base text-white mb-2">
-                                {t("registered")}
-                              </span>
-                              <span>{t("health_facility__registered")}</span>
-                              <span className="mt-2 font-bold text-green-500">
-                                {t("no_action_required")}
-                              </span>
-                            </div>
-                          ) : (
-                            <div className="flex flex-col whitespace-nowrap text-gray-300">
-                              <span className="font-semibold text-base text-white mb-2">
-                                {t("not_registered")}
-                              </span>
-                              <Trans
-                                i18nKey="health_facility__not_registered_1"
-                                ns={I18NNAMESPACE}
-                                components={{
-                                  strong: (
-                                    <strong className="text-warning-500" />
-                                  ),
-                                }}
-                              />
-                              <span className="mt-2">
-                                <Trans
-                                  i18nKey="health_facility__not_registered_1.1"
-                                  ns={I18NNAMESPACE}
-                                  components={{
-                                    strong: (
-                                      <strong className="text-warning-500" />
-                                    ),
-                                  }}
-                                />
-                              </span>
-                            </div>
-                          )}
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                </FormControl>
+                  </FormControl>
+                  <Tooltip>
+                    <TooltipTrigger
+                      type="button"
+                      aria-label={t(registered ? "registered" : "not_registered")}
+                      className={
+                        registered ? "text-primary" : "text-amber-500"
+                      }
+                    >
+                      {registered ? (
+                        <CircleCheckIcon className="size-6" />
+                      ) : (
+                        <CircleAlertIcon className="size-6" />
+                      )}
+                    </TooltipTrigger>
+                    <TooltipContent className="flex-col items-start gap-1 py-2">
+                      <span className="text-sm font-semibold">
+                        {t(registered ? "registered" : "not_registered")}
+                      </span>
+                      {registered ? (
+                        <>
+                          <span>{t("health_facility__registered")}</span>
+                          <span className="font-semibold">
+                            {t("no_action_required")}
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <span>
+                            <Trans
+                              i18nKey="health_facility__not_registered_1"
+                              ns={I18NNAMESPACE}
+                              components={{ strong: <strong /> }}
+                            />
+                          </span>
+                          <span>
+                            <Trans
+                              i18nKey="health_facility__not_registered_1.1"
+                              ns={I18NNAMESPACE}
+                              components={{ strong: <strong /> }}
+                            />
+                          </span>
+                        </>
+                      )}
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
                 <FormMessage />
               </FormItem>
             )}

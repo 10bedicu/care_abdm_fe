@@ -1,22 +1,20 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { toast as _toast, ToasterProps } from "sonner";
+import { toast as _toast, type ExternalToast } from "sonner";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-// TODO: Share sonner toast package with core.
-const defaultToastOptions = {
-  position: "top-right" as ToasterProps["position"],
-  richColors: true,
-};
-
+/*
+ * sonner is shared with the host (vite.config.mjs), so these toasts are shown
+ * by the host's <Toaster>, at its position and in its style.
+ */
 export const toast = {
-  error: (message: string, options = {}) =>
-    _toast.error(message, { ...defaultToastOptions, ...options }),
-  warning: (message: string, options = {}) =>
-    _toast.warning(message, { ...defaultToastOptions, ...options }),
-  success: (message: string, options = {}) =>
-    _toast.success(message, { ...defaultToastOptions, ...options }),
+  error: (message: string, options: ExternalToast = {}) =>
+    _toast.error(message, options),
+  warning: (message: string, options: ExternalToast = {}) =>
+    _toast.warning(message, options),
+  success: (message: string, options: ExternalToast = {}) =>
+    _toast.success(message, options),
 };

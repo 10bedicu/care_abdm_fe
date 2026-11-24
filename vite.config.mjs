@@ -66,9 +66,25 @@ export default defineConfig({
     },
   },
   resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
-    },
+    alias: [
+      // CommonJS modules that `require("react")` would bundle a second React
+      // instead of the one shared with the host. See src/shims.
+      {
+        find: /^use-sync-external-store\/shim\/with-selector(\.js)?$/,
+        replacement: path.resolve(
+          __dirname,
+          "./src/shims/use-sync-external-store-with-selector.ts",
+        ),
+      },
+      {
+        find: /^use-sync-external-store\/shim(\/index\.js)?$/,
+        replacement: path.resolve(
+          __dirname,
+          "./src/shims/use-sync-external-store.ts",
+        ),
+      },
+      { find: "@", replacement: path.resolve(__dirname, "./src") },
+    ],
   },
   envPrefix: "REACT_",
 });

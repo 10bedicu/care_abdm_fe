@@ -1,3 +1,4 @@
+import { AbdmScope } from "@/components/AbdmScope";
 import { Button } from "@/components/ui/button";
 import { FC } from "react";
 import { HashIcon } from "lucide-react";
@@ -27,17 +28,23 @@ const PatientSearchActions: FC<WithMeta<PatientSearchActionsProps>> = ({
   }
 
   return (
-    <div className="flex items-center gap-2">
-      <TokenSearchDialog
-        facilityId={facilityId}
-        trigger={
-          <Button variant="default" className={cn(className, "flex gap-2")}>
-            <HashIcon />
-            Find Patient by Abha Token
-          </Button>
-        }
-      />
-    </div>
+    <AbdmScope>
+      {/* The host asks for a full-width button; this wrapper is what it fills. */}
+      <div className="flex">
+        <TokenSearchDialog
+          facilityId={facilityId}
+          trigger={
+            <Button
+              variant="primary_gradient"
+              className={cn("gap-3", className)}
+            >
+              <HashIcon />
+              Find Patient by Abha Token
+            </Button>
+          }
+        />
+      </div>
+    </AbdmScope>
   );
 };
 
