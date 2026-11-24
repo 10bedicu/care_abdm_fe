@@ -1,7 +1,7 @@
 import { FC, useMemo } from "react";
 import { HIProfile } from "hi-profiles";
 import { ArrowLeftIcon, Loader2Icon } from "lucide-react";
-import { Link } from "raviger";
+import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 
@@ -101,7 +101,7 @@ const HealthInformation: FC<HealthInformationProps> = ({
         className="font-semibold underline underline-offset-2"
         asChild
       >
-        <Link href={encounterUrl}>
+        <Link to={encounterUrl}>
           <ArrowLeftIcon />
           {t("back")}
         </Link>

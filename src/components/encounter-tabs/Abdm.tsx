@@ -9,7 +9,7 @@ import { EncounterTabProps } from ".";
 import { Encounter } from "@/types/encounter";
 import { FC, useState } from "react";
 import { I18NNAMESPACE } from "@/lib/constants";
-import { Link } from "raviger";
+import { Link } from "@tanstack/react-router";
 import { Patient } from "@/types/patient";
 import { apis } from "@/apis";
 import { cn } from "@/lib/utils";
@@ -136,7 +136,7 @@ function ConsentArtefactCard({
       </div>
       <Button asChild variant="outline" size="sm" className="shrink-0">
         <Link
-          href={healthInformationPath(
+          to={healthInformationPath(
             facilityId,
             patientId,
             encounterId,

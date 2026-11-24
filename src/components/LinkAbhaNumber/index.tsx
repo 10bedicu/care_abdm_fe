@@ -18,7 +18,7 @@ import {
 
 import { AbhaNumber } from "@/types/abhaNumber";
 import { HealthFacility } from "@/types/healthFacility";
-import { Link } from "raviger";
+import { Link } from "@tanstack/react-router";
 import { LinkAbhaForm } from "./LinkAbhaForm";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { User } from "@/types/user";
@@ -128,7 +128,7 @@ export const LinkAbhaNumber: FC<LinkAbhaNumberProps> = ({
 
                 {backUrl && (
                   <Link
-                    href={backUrl}
+                    to={backUrl}
                     className={cn(
                       buttonVariants({ variant: "outline" }),
                       "max-sm:w-full",

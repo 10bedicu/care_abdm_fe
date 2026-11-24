@@ -17,7 +17,7 @@ export default defineConfig({
         "react-dom",
         "react-i18next",
         "@tanstack/react-query",
-        "raviger",
+        "@tanstack/react-router",
         "sonner",
       ],
     }),

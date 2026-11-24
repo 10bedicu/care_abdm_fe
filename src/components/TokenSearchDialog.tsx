@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Patient } from "@/types/patient";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apis } from "@/apis";
-import { navigate } from "raviger";
+import { useNavigate } from "@tanstack/react-router";
 import { useDebouncedState } from "@/hooks/useDebouncedState";
 import { useQuery } from "@tanstack/react-query";
 
@@ -106,7 +106,7 @@ const TokenSearchDialog: FC<TokenSearchDialogProps> = ({
             )}
 
             {!isFetching && isEnabled && patient && (
-              <PatientCard patient={patient} />
+              <PatientCard patient={patient} facilityId={facilityId} />
             )}
           </div>
         </div>
@@ -115,7 +115,11 @@ const TokenSearchDialog: FC<TokenSearchDialogProps> = ({
   );
 };
 
-const PatientCard: FC<{ patient: Patient }> = ({ patient }) => {
+const PatientCard: FC<{ patient: Patient; facilityId: string }> = ({
+  patient,
+  facilityId,
+}) => {
+  const navigate = useNavigate();
   const yearOfBirth = useMemo(() => {
     return patient.year_of_birth ?? patient.date_of_birth?.split("-")[0];
   }, [patient]);
@@ -123,8 +127,10 @@ const PatientCard: FC<{ patient: Patient }> = ({ patient }) => {
   return (
     <div
       onClick={() => {
-        navigate("patients/home", {
-          query: {
+        navigate({
+          to: "/facility/$facilityId/patients/home",
+          params: { facilityId },
+          search: {
             phone_number: patient.phone_number,
             year_of_birth: yearOfBirth,
             partial_id: patient.partial_id || patient.id.slice(0, 5),
