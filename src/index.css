@@ -1,24 +1,64 @@
+/*
+ * CARE ABDM styles (care_fe >= 3.1).
+ *
+ * Utilities are scoped to `.abdm-container` so they can neither reorder nor
+ * override the host's. Every plugin root (`AbdmScope`) and every portal
+ * (`components/ui`) carries that class. Theme values come from the host; see
+ * `careui.css`.
+ */
+@layer theme, base, components, utilities;
 
-@config '../tailwind.config.js';
+@import "tailwindcss/theme.css" layer(theme) theme(reference);
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "./careui.css";
+
+/* Fingerprint capture progress */
+@utility animate-fill-up {
+  animation: abdm-fill-up 2s ease-out forwards;
+}
+
+@keyframes abdm-fill-up {
+  0% {
+    mask-position: 0% 100%;
+    -webkit-mask-position: 0% 100%;
+  }
+  100% {
+    mask-position: 0% 0%;
+    -webkit-mask-position: 0% 0%;
+  }
+}
 
 .abdm-container {
-  @import 'tailwindcss';
+  @import "tailwindcss/utilities.css" layer(utilities);
 }
 
 /*
-  The default border color has changed to `currentcolor` in Tailwind CSS v4,
-  so we've added these compatibility styles to make sure everything still
-  looks the same as it did with Tailwind CSS v3.
+ * The host restyles a few CareUI slots globally (care_fe/src/style/index.css).
+ * Scoped utilities outrank those rules, so they are repeated here.
+ */
+@layer utilities {
+  .abdm-container {
+    /* Standalone inputs sit on the background; input groups own their surface. */
+    .bg-transparent:where(
+        input[data-slot="input"],
+        textarea[data-slot="textarea"],
+        input[data-slot="form-control"],
+        textarea[data-slot="form-control"]
+      ):not(:where(.group\/input-group *)) {
+      @apply bg-background;
+    }
 
-  If we ever want to remove these styles, we need to add an explicit border
-  color utility to any element that depends on these defaults.
-*/
-@layer base {
-  *,
-  ::after,
-  ::before,
-  ::backdrop,
-  ::file-selector-button {
-    border-color: var(--color-gray-200, currentcolor);
+    [data-slot="form-label"][for][aria-required="true"]::after {
+      @apply -ml-1 text-red-500 content-['*'];
+    }
+
+    [data-slot="input-otp-slot"] {
+      @apply data-[active=true]:ring-primary-500 data-[active=true]:border-primary-500 data-[active=true]:ring-1 not-first:data-[active=true]:border-x;
+    }
+
+    button[role="combobox"] {
+      @apply w-full;
+    }
   }
 }

@@ -9,7 +9,8 @@ import {
 import { FC, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { Button } from "@/components/ui/button";
+import { AbdmScope } from "@/components/AbdmScope";
+import { CloudDownloadIcon } from "lucide-react";
 import CreateConsentRequestForm from "../CreateConsentRequestForm";
 import { Encounter } from "@/types/encounter";
 import { I18NNAMESPACE } from "@/lib/constants";
@@ -49,41 +50,40 @@ const EncounterActions: FC<WithMeta<EncounterActionsProps>> = ({
   }
 
   return (
-    <>
+    <AbdmScope>
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogTrigger asChild className="abdm-container">
-          <Button
-            variant="ghost"
-            className={cn(
-              "relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden transition-colors focus:bg-gray-100 focus:text-gray-900 data-disabled:pointer-events-none data-disabled:opacity-50 [&>svg]:size-4 [&>svg]:shrink-0 dark:focus:bg-gray-800 dark:focus:text-gray-50",
-              className,
-            )}
-          >
-            {t("hi__fetch_records")}
-          </Button>
+        {/* The host styles this row: an outline button on the encounter
+            overview, a command row in the encounter command dialog. */}
+        <DialogTrigger
+          className={cn(
+            "items-center gap-2 text-left text-sm [&_svg]:size-4 [&_svg]:shrink-0",
+            className,
+          )}
+        >
+          <CloudDownloadIcon aria-hidden="true" />
+          {t("hi__fetch_records")}
         </DialogTrigger>
-        <DialogContent className="abdm-container sm:max-w-xl">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
           <DialogHeader>
             <DialogTitle>{t("hi__fetch_records")}</DialogTitle>
             <DialogDescription>
               {t("hi__fetch_records_description")}
             </DialogDescription>
           </DialogHeader>
-          <div className="mt-6">
-            <CreateConsentRequestForm
-              abhaNumber={abhaNumber}
-              encounter={encounter}
-              onSuccess={() => {
-                queryClient.invalidateQueries({
-                  queryKey: ["consents", encounter.patient.id],
-                });
-                setIsDialogOpen(false);
-              }}
-            />
-          </div>
+          <CreateConsentRequestForm
+            abhaNumber={abhaNumber}
+            encounter={encounter}
+            onCancel={() => setIsDialogOpen(false)}
+            onSuccess={() => {
+              queryClient.invalidateQueries({
+                queryKey: ["consents", encounter.patient.id],
+              });
+              setIsDialogOpen(false);
+            }}
+          />
         </DialogContent>
       </Dialog>
-    </>
+    </AbdmScope>
   );
 };
 

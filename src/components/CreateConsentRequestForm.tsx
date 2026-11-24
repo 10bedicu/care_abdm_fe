@@ -21,13 +21,14 @@ import {
 
 import { AbhaNumber } from "@/types/abhaNumber";
 import { Button } from "@/components/ui/button";
-import { DatePicker } from "./ui/date-picker";
-import { DatePickerWithRange } from "./ui/date-range-picker";
+import { DatePicker } from "@/components/ui/date-picker";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { DialogFooter } from "@/components/ui/dialog";
 import { Encounter } from "@/types/encounter";
-import { FC } from "react";
+import { FC, useId } from "react";
 import { I18NNAMESPACE } from "@/lib/constants";
 import { Input } from "@/components/ui/input";
-import { MultiSelect } from "./ui/multi-select";
+import { MultiSelect } from "@/components/ui/multi-select";
 import { apis } from "@/apis";
 import dayjs from "@/lib/dayjs";
 import { toast } from "@/lib/utils";
@@ -41,6 +42,7 @@ type CreateConsentRequestFormProps = {
   abhaNumber?: AbhaNumber;
   encounter: Encounter;
   onSuccess?: (consentRequest: ConsentRequest) => void;
+  onCancel: () => void;
 };
 
 const createConsentRequestFormSchema = z.object({
@@ -62,8 +64,10 @@ const CreateConsentRequestForm: FC<CreateConsentRequestFormProps> = ({
   abhaNumber,
   encounter,
   onSuccess,
+  onCancel,
 }) => {
   const { t } = useTranslation(I18NNAMESPACE);
+  const dateRangeLabelId = useId();
 
   const form = useForm<CreateConsentRequestFormValues>({
     resolver: zodResolver(createConsentRequestFormSchema),
@@ -104,7 +108,7 @@ const CreateConsentRequestForm: FC<CreateConsentRequestFormProps> = ({
           e.stopPropagation();
           form.handleSubmit(onSubmit)(e);
         }}
-        className="space-y-4"
+        className="space-y-5"
       >
         <FormField
           control={form.control}
@@ -127,7 +131,7 @@ const CreateConsentRequestForm: FC<CreateConsentRequestFormProps> = ({
           render={({ field }) => (
             <FormItem>
               <FormLabel>{t("consent_request__purpose")}</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select value={field.value} onValueChange={field.onChange}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder={t("consent_request__purpose")} />
@@ -150,12 +154,19 @@ const CreateConsentRequestForm: FC<CreateConsentRequestFormProps> = ({
           control={form.control}
           name="time_range"
           render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel>{t("consent_request__date_range")}</FormLabel>
-              <DatePickerWithRange
-                value={field.value}
-                onChange={field.onChange}
-              />
+            <FormItem>
+              <FormLabel id={dateRangeLabelId}>
+                {t("consent_request__date_range")}
+              </FormLabel>
+              <FormControl>
+                <DateRangePicker
+                  value={field.value}
+                  onApply={field.onChange}
+                  allowOpenEnded={false}
+                  aria-labelledby={dateRangeLabelId}
+                  className="w-full"
+                />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -165,18 +176,19 @@ const CreateConsentRequestForm: FC<CreateConsentRequestFormProps> = ({
           control={form.control}
           name="hi_types"
           render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel>{t("consent_request__expiry")}</FormLabel>
-              <MultiSelect
-                options={CONSENT_HI_TYPES.map((type) => ({
-                  label: t(`consent__hi_type__${type}`),
-                  value: type,
-                }))}
-                onValueChange={field.onChange}
-                defaultValue={field.value}
-                modalPopover
-                maxCount={7}
-              />
+            <FormItem>
+              <FormLabel>{t("consent_request__hi_types")}</FormLabel>
+              <FormControl>
+                <MultiSelect
+                  options={CONSENT_HI_TYPES.map((type) => ({
+                    label: t(`consent__hi_type__${type}`),
+                    value: type,
+                  }))}
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  placeholder={t("consent_request__hi_types_placeholder")}
+                />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -186,21 +198,31 @@ const CreateConsentRequestForm: FC<CreateConsentRequestFormProps> = ({
           control={form.control}
           name="expiry"
           render={({ field }) => (
-            <FormItem className="flex flex-col">
+            <FormItem>
               <FormLabel>{t("consent_request__expiry")}</FormLabel>
-              <DatePicker date={field.value} onChange={field.onChange} />
+              <DatePicker
+                date={field.value}
+                onChange={field.onChange}
+                className="sm:w-full"
+              />
               <FormMessage />
             </FormItem>
           )}
         />
 
-        <Button
-          type="submit"
-          variant="default"
-          loading={createConsentRequestMutation.isPending}
-        >
-          {t("request_consent")}
-        </Button>
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            disabled={createConsentRequestMutation.isPending}
+          >
+            {t("cancel")}
+          </Button>
+          <Button type="submit" loading={createConsentRequestMutation.isPending}>
+            {t("request_consent")}
+          </Button>
+        </DialogFooter>
       </form>
     </Form>
   );

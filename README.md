@@ -96,3 +96,12 @@ npm run dev
 **HealthInformation Page**
 - Purpose: Displays health information received from 3rd party hospitals via ABDM
 - Rendering: Uses custom `hi-profiles` package ([GitHub Repository](https://github.com/ohcnetwork/hi-profiles))
+
+## UI and Styling
+
+The plugin follows the CARE design system (CareUI), and requires care_fe 3.1 or later.
+
+- `src/components/ui/` holds copies of care_fe's CareUI primitives (built on `@base-ui/react`). When care_fe updates a primitive, copy it again and keep the three plugin adaptations: `useTranslation(I18NNAMESPACE)`, `className={SCOPE_CLASS}` on every `Portal`, and `lucide-react` icons in place of `CareIcon`.
+- The plugin defines no theme of its own. `src/careui.css` maps Tailwind's theme keys to the host's CSS variables, so colours, radii, fonts and the accessibility themes follow care_fe. Use semantic utilities (`bg-background`, `text-muted-foreground`, `border-border`), not raw palette colours.
+- Utilities are scoped to `.abdm-container` so they cannot affect the host. Wrap the root of every pluggable component, page and tab in `<AbdmScope>`.
+- `vite.config.mjs` aliases `use-sync-external-store/shim` to `src/shims/`. Without it, a second copy of React is bundled and the Base UI components crash at runtime.

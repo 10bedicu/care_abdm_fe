@@ -53,6 +53,7 @@ const PatientHomeActions: FC<WithMeta<PatientHomeActionsProps>> = ({
               abha_number: abhaNumber.external_id,
             });
           }}
+          variant="outline"
           className={className}
         />
       )}

@@ -1,12 +1,20 @@
 import { FC, useEffect, useMemo, useState } from "react";
-import { ExternalLinkIcon, InfoIcon, RefreshCwIcon } from "lucide-react";
+import {
+  ExternalLinkIcon,
+  InfoIcon,
+  QrCodeIcon,
+  RefreshCwIcon,
+  SearchIcon,
+} from "lucide-react";
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
-import { DateRange } from "react-day-picker";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 
 import { apis } from "@/apis";
 import { APIError } from "@/apis/request";
+import { AbdmScope } from "@/components/AbdmScope";
+import { Pagination } from "@/components/common/Pagination";
+import { TableSkeleton } from "@/components/common/SkeletonLoading";
 import {
   CancelOrderDialog,
   MarkPaidDialog,
@@ -18,25 +26,29 @@ import {
   formatAmount,
 } from "@/components/scan-pay/ScanPayStatusBadge";
 import { Button } from "@/components/ui/button";
-import { DatePickerWithRange } from "@/components/ui/date-range-picker";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  DateRangePicker,
+  DateRangeValue,
+} from "@/components/ui/date-range-picker";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { I18NNAMESPACE } from "@/lib/constants";
 import { useScanPayManualActions } from "@/lib/pluginConfig";
 import dayjs from "@/lib/dayjs";
@@ -107,9 +119,6 @@ const OrderReferences = ({
 }) => {
   const { t } = useTranslation(I18NNAMESPACE);
   const invoice = order.invoice;
-  const href = invoice?.id
-    ? `/facility/${facilityId}/billing/invoices/${invoice.id}`
-    : undefined;
   const invoiceLabel =
     invoice?.number?.trim() ||
     invoice?.title?.trim() ||
@@ -118,14 +127,16 @@ const OrderReferences = ({
   const rows = [
     {
       label: t("scan_pay__col_invoice"),
-      value:
-        invoice && href ? (
-          <Link to={href} className="font-medium text-primary-700 hover:underline">
-            {invoiceLabel}
-          </Link>
-        ) : (
-          "—"
-        ),
+      value: invoice?.id ? (
+        <Link
+          to={`/facility/${facilityId}/billing/invoices/${invoice.id}`}
+          className="font-medium text-blue-700 underline underline-offset-4 transition-[color,text-underline-offset] hover:text-blue-800 hover:underline-offset-2 dark:text-blue-400 dark:hover:text-blue-300"
+        >
+          {invoiceLabel}
+        </Link>
+      ) : (
+        "—"
+      ),
     },
     { label: t("scan_pay__order_number"), value: order.order_number || "—" },
     { label: t("scan_pay__atrn"), value: order.transaction_id || "—" },
@@ -134,10 +145,13 @@ const OrderReferences = ({
   return (
     <dl className="grid gap-1 text-xs">
       {rows.map((row) => (
-        <div key={row.label} className="grid grid-cols-[4.5rem_minmax(0,1fr)] gap-2">
-          <dt className="text-gray-500">{row.label}</dt>
+        <div
+          key={row.label}
+          className="grid grid-cols-[4.5rem_minmax(0,1fr)] gap-2"
+        >
+          <dt className="text-muted-foreground">{row.label}</dt>
           <dd
-            className="break-words text-gray-800"
+            className="wrap-anywhere whitespace-normal text-foreground"
             title={typeof row.value === "string" ? row.value : undefined}
           >
             {row.value}
@@ -195,7 +209,7 @@ const OrderActions = ({
             <Button
               size="sm"
               variant="ghost"
-              className="w-full text-red-600 hover:text-red-700 sm:w-auto"
+              className="w-full text-destructive hover:text-destructive/90 sm:w-auto"
               onClick={onCancel}
             >
               {t("scan_pay__cancel_order")}
@@ -223,7 +237,7 @@ const ScanPayOrders: FC<ScanPayOrdersProps> = ({ facilityId }) => {
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>("pending");
   const [search, setSearch] = useState("");
-  const [dateRange, setDateRange] = useState<DateRange>();
+  const [dateRange, setDateRange] = useState<DateRangeValue>();
   const [page, setPage] = useState(0);
   const [cancelling, setCancelling] = useState<PaymentOrder | null>(null);
   const [markingPaid, setMarkingPaid] = useState<PaymentOrder | null>(null);
@@ -281,7 +295,6 @@ const ScanPayOrders: FC<ScanPayOrdersProps> = ({ facilityId }) => {
 
   const orders = data?.results ?? [];
   const count = data?.count ?? 0;
-  const pageCount = Math.max(1, Math.ceil(count / PAGE_SIZE));
 
   const amountOf = (order: PaymentOrder) =>
     order.amount || order.invoice
@@ -303,50 +316,59 @@ const ScanPayOrders: FC<ScanPayOrdersProps> = ({ facilityId }) => {
     />
   );
 
+  const header = (
+    <div>
+      <h1 className="mb-2 text-2xl font-bold text-muted-foreground">
+        {t("scan_pay__title")}
+      </h1>
+      <p className="text-sm text-soft-foreground">
+        {t("scan_pay__description")}
+      </p>
+    </div>
+  );
+
   if (isError && error instanceof APIError && error.status === 403) {
     return (
-      <div className="abdm-container flex flex-col gap-2">
-        <h1 className="text-xl font-semibold text-gray-900">
-          {t("scan_pay__title")}
-        </h1>
-        <p className="text-sm text-gray-600">{t("scan_pay__forbidden")}</p>
-      </div>
+      <AbdmScope>
+        <div className="flex flex-col gap-4 py-4">
+          {header}
+          <EmptyState
+            title={t("scan_pay__title")}
+            description={t("scan_pay__forbidden")}
+          />
+        </div>
+      </AbdmScope>
     );
   }
 
   return (
-    <div className="abdm-container flex flex-col gap-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex min-w-0 flex-col gap-1">
-          <h1 className="text-xl font-semibold text-gray-900">
-            {t("scan_pay__title")}
-          </h1>
-          <p className="text-sm text-gray-600">{t("scan_pay__description")}</p>
-        </div>
-        <div className="flex shrink-0 items-center gap-2 self-end sm:self-auto">
-          <Label htmlFor="scan-pay-auto-refresh" className="whitespace-nowrap">
-            {t("scan_pay__auto_refresh")}
-          </Label>
-          <Switch
-            id="scan-pay-auto-refresh"
-            checked={shouldAutoRefresh}
-            onCheckedChange={(checked) =>
-              navigate({
-                to: ".",
-                unsafeRelative: "path",
-                search: (prev: Record<string, unknown>) => ({
-                  ...prev,
-                  autoRefresh: checked ? "true" : "false",
-                }),
-                replace: true,
-              })
-            }
-          />
-          <TooltipProvider>
+    <AbdmScope>
+      <div className="py-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          {header}
+          <div className="flex shrink-0 items-center gap-2">
+            <Label htmlFor="scan-pay-auto-refresh" className="whitespace-nowrap">
+              {t("scan_pay__auto_refresh")}
+            </Label>
+            <Switch
+              id="scan-pay-auto-refresh"
+              checked={shouldAutoRefresh}
+              onCheckedChange={(checked) =>
+                navigate({
+                  to: ".",
+                  unsafeRelative: "path",
+                  search: (prev: Record<string, unknown>) => ({
+                    ...prev,
+                    autoRefresh: checked ? "true" : "false",
+                  }),
+                  replace: true,
+                })
+              }
+            />
             <Tooltip>
               <TooltipTrigger asChild>
-                <span className="hidden cursor-help text-gray-500 md:inline-flex">
-                  <InfoIcon className="size-4" />
+                <span className="hidden cursor-help md:block">
+                  <InfoIcon className="size-4 text-muted-foreground" />
                 </span>
               </TooltipTrigger>
               <TooltipContent>
@@ -355,51 +377,40 @@ const ScanPayOrders: FC<ScanPayOrdersProps> = ({ facilityId }) => {
                 })}
               </TooltipContent>
             </Tooltip>
-          </TooltipProvider>
+          </div>
         </div>
-      </div>
 
-      <div className="flex min-w-0 flex-col gap-3 xl:flex-row xl:items-center">
-        <div className="md:hidden">
-          <Select value={tab} onValueChange={(value) => setTab(value as Tab)}>
-            <SelectTrigger aria-label={t("status")} className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
+        <div className="mt-4 w-full overflow-x-auto">
+          <Tabs value={tab} onValueChange={(value) => setTab(value as Tab)}>
+            <TabsList variant="line" aria-label={t("status")}>
               {FILTERS.map((filter) => (
-                <SelectItem key={filter.value} value={filter.value}>
+                <TabsTrigger key={filter.value} value={filter.value}>
                   {t(filter.label)}
-                </SelectItem>
+                </TabsTrigger>
               ))}
-            </SelectContent>
-          </Select>
+            </TabsList>
+          </Tabs>
         </div>
-        <Tabs
-          value={tab}
-          onValueChange={(value) => setTab(value as Tab)}
-          className="hidden shrink-0 md:block"
-        >
-          <TabsList className="h-9 w-max justify-start">
-            {FILTERS.map((filter) => (
-              <TabsTrigger key={filter.value} value={filter.value}>
-                {t(filter.label)}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
-        <div className="flex min-w-0 flex-col gap-2 sm:ml-auto sm:flex-row sm:items-center sm:justify-end">
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={t("scan_pay__search")}
-            className="w-full min-w-0 sm:w-[28rem] sm:max-w-md"
-          />
-          <div className="flex gap-2 sm:shrink-0">
-            <DatePickerWithRange
+
+        <div className="my-4 flex w-full flex-wrap items-start gap-2">
+          <div className="relative w-full sm:w-auto">
+            <SearchIcon className="pointer-events-none absolute top-1/2 left-3 z-10 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={t("scan_pay__search")}
+              aria-label={t("scan_pay__search")}
+              className="w-full pl-10 sm:w-80"
+            />
+          </div>
+          <div className="flex w-full min-w-0 gap-2 sm:w-auto">
+            <DateRangePicker
               value={dateRange}
-              onChange={setDateRange}
+              onApply={(range) =>
+                setDateRange(range.from || range.to ? range : undefined)
+              }
               placeholder={t("scan_pay__date_range")}
-              className="min-w-0 flex-1 sm:w-56"
+              className="min-w-0 flex-1 sm:w-auto sm:flex-none"
             />
             <Button
               variant="outline"
@@ -412,139 +423,126 @@ const ScanPayOrders: FC<ScanPayOrdersProps> = ({ facilityId }) => {
             </Button>
           </div>
         </div>
-      </div>
 
-      <div className="flex flex-col gap-3 md:hidden">
-        {isLoading &&
-          Array.from({ length: 3 }).map((_, index) => (
-            <Skeleton key={index} className="h-36 w-full rounded-lg" />
-          ))}
-        {!isLoading && orders.length === 0 && (
-          <div className="rounded-lg border border-gray-200 bg-white px-4 py-10 text-center text-sm text-gray-500">
-            {t("scan_pay__no_orders")}
+        {isLoading ? (
+          <TableSkeleton count={5} columns={6} />
+        ) : orders.length === 0 ? (
+          <EmptyState
+            icon={<QrCodeIcon className="size-6 text-primary" />}
+            title={t("scan_pay__no_orders")}
+            description={t("scan_pay__no_orders_description")}
+          />
+        ) : (
+          <>
+            <div className="flex flex-col gap-3 md:hidden">
+              {orders.map((order) => (
+                <Card key={order.id}>
+                  <CardContent className="flex flex-col gap-3 p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="truncate font-medium text-foreground">
+                          {order.patient?.name ?? "—"}
+                        </div>
+                        <div className="truncate text-xs text-muted-foreground">
+                          {order.abha_address}
+                        </div>
+                      </div>
+                      <div className="shrink-0 text-right font-medium text-foreground">
+                        {amountOf(order)}
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                      <ScanPayStatusBadge
+                        status={order.status}
+                        reason={order.invoice?.cancelled_reason}
+                      />
+                      <span>
+                        {dayjs(order.created_date).format(
+                          "DD MMM YYYY, hh:mm A",
+                        )}
+                      </span>
+                      {order.provider && <span>{order.provider}</span>}
+                    </div>
+                    <OrderReferences order={order} facilityId={facilityId} />
+                    {actionsFor(order)}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            <div className="hidden md:block">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t("scan_pay__col_created")}</TableHead>
+                    <TableHead>{t("scan_pay__col_patient")}</TableHead>
+                    <TableHead>{t("scan_pay__col_invoice")}</TableHead>
+                    <TableHead className="text-right">
+                      {t("scan_pay__col_amount")}
+                    </TableHead>
+                    <TableHead>{t("status")}</TableHead>
+                    <TableHead className="text-right">
+                      {t("scan_pay__col_actions")}
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {orders.map((order) => (
+                    <TableRow key={order.id}>
+                      <TableCell>
+                        <div>{dayjs(order.created_date).format("DD MMM YYYY")}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {dayjs(order.created_date).format("hh:mm A")}
+                        </div>
+                        {order.provider && (
+                          <div className="text-xs text-muted-foreground">
+                            {order.provider}
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-medium">
+                          {order.patient?.name ?? "—"}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {order.abha_address}
+                        </div>
+                      </TableCell>
+                      <TableCell className="min-w-56 whitespace-normal">
+                        <OrderReferences order={order} facilityId={facilityId} />
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
+                        {amountOf(order)}
+                      </TableCell>
+                      <TableCell>
+                        <ScanPayStatusBadge
+                          status={order.status}
+                          reason={order.invoice?.cancelled_reason}
+                        />
+                      </TableCell>
+                      <TableCell>{actionsFor(order)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </>
+        )}
+
+        {!!count && (
+          <div className="mt-4 flex flex-col items-center gap-2 sm:flex-row sm:justify-between">
+            <span className="text-sm text-muted-foreground">
+              {t("scan_pay__total_orders", { count })}
+            </span>
+            <Pagination
+              className="mx-0 w-full sm:w-auto"
+              totalCount={count}
+              perPage={PAGE_SIZE}
+              page={page + 1}
+              onChange={(next) => setPage(next - 1)}
+            />
           </div>
         )}
-        {orders.map((order) => (
-          <article
-            key={order.id}
-            className="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-4"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <div className="truncate font-medium text-gray-900">
-                  {order.patient?.name ?? "—"}
-                </div>
-                <div className="truncate text-xs text-gray-500">
-                  {order.abha_address}
-                </div>
-              </div>
-              <div className="shrink-0 text-right font-medium text-gray-900">
-                {amountOf(order)}
-              </div>
-            </div>
-            <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
-              <ScanPayStatusBadge
-                status={order.status}
-                reason={order.invoice?.cancelled_reason}
-              />
-              <span>{dayjs(order.created_date).format("DD MMM YYYY, hh:mm A")}</span>
-              {order.provider && <span>{order.provider}</span>}
-            </div>
-            <OrderReferences order={order} facilityId={facilityId} />
-            {actionsFor(order)}
-          </article>
-        ))}
-      </div>
-
-      <div className="hidden overflow-x-auto rounded-lg border border-gray-200 bg-white md:block">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50 text-left text-xs font-medium uppercase tracking-wide text-gray-500">
-            <tr>
-              <th className="px-4 py-3">{t("scan_pay__col_created")}</th>
-              <th className="px-4 py-3">{t("scan_pay__col_patient")}</th>
-              <th className="px-4 py-3">{t("scan_pay__col_invoice")}</th>
-              <th className="px-4 py-3 text-right">{t("scan_pay__col_amount")}</th>
-              <th className="px-4 py-3">{t("status")}</th>
-              <th className="px-4 py-3 text-right">{t("scan_pay__col_actions")}</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {isLoading &&
-              Array.from({ length: 5 }).map((_, index) => (
-                <tr key={index}>
-                  {Array.from({ length: 6 }).map((_, cell) => (
-                    <td key={cell} className="px-4 py-3">
-                      <Skeleton className="h-4 w-full" />
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            {!isLoading && orders.length === 0 && (
-              <tr>
-                <td colSpan={6} className="px-4 py-10 text-center text-gray-500">
-                  {t("scan_pay__no_orders")}
-                </td>
-              </tr>
-            )}
-            {orders.map((order) => (
-              <tr key={order.id} className="align-top">
-                <td className="whitespace-nowrap px-4 py-3 text-gray-700">
-                  <div>{dayjs(order.created_date).format("DD MMM YYYY")}</div>
-                  <div className="text-xs text-gray-500">
-                    {dayjs(order.created_date).format("hh:mm A")}
-                  </div>
-                  {order.provider && (
-                    <div className="text-xs text-gray-500">{order.provider}</div>
-                  )}
-                </td>
-                <td className="px-4 py-3">
-                  <div className="font-medium text-gray-900">
-                    {order.patient?.name ?? "—"}
-                  </div>
-                  <div className="text-xs text-gray-500">{order.abha_address}</div>
-                </td>
-                <td className="px-4 py-3">
-                  <OrderReferences order={order} facilityId={facilityId} />
-                </td>
-                <td className="whitespace-nowrap px-4 py-3 text-right font-medium text-gray-900">
-                  {amountOf(order)}
-                </td>
-                <td className="px-4 py-3">
-                  <ScanPayStatusBadge
-                    status={order.status}
-                    reason={order.invoice?.cancelled_reason}
-                  />
-                </td>
-                <td className="px-4 py-3">{actionsFor(order)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="flex flex-col gap-3 text-sm text-gray-600 sm:flex-row sm:items-center sm:justify-between">
-        <span>{t("scan_pay__total_orders", { count })}</span>
-        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:flex">
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={page === 0}
-            onClick={() => setPage((p) => Math.max(0, p - 1))}
-          >
-            {t("scan_pay__previous")}
-          </Button>
-          <span className="text-center">
-            {page + 1} / {pageCount}
-          </span>
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={page + 1 >= pageCount}
-            onClick={() => setPage((p) => p + 1)}
-          >
-            {t("scan_pay__next")}
-          </Button>
-        </div>
       </div>
 
       <CancelOrderDialog
@@ -561,7 +559,7 @@ const ScanPayOrders: FC<ScanPayOrdersProps> = ({ facilityId }) => {
         onConfirm={(order, values) => markPaid.mutateAsync({ order, ...values })}
         loading={markPaid.isPending}
       />
-    </div>
+    </AbdmScope>
   );
 };
 

@@ -6,7 +6,14 @@ import {
   CircleXIcon,
   FingerprintIcon,
 } from "lucide-react";
-import { FC, JSX, useEffect, useMemo, useState } from "react";
+import {
+  ComponentProps,
+  FC,
+  JSX,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import {
   Form,
   FormControl,
@@ -43,6 +50,7 @@ import useMultiStepForm, { InjectedStepProps } from "./useMultiStepForm";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 import { AbhaLoginAccount, AbhaNumber } from "@/types/abhaNumber";
+import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { QRCodeSVG } from "qrcode.react";
@@ -79,6 +87,35 @@ type FormMemory = {
   otpSystem: "aadhaar" | "abdm";
   loginAccounts?: AbhaLoginAccount[];
 };
+
+const OTP_LENGTH = 6;
+
+/** OTP entry as on the host's sign-in: slots share the width of the column. */
+const OtpInput = (
+  props: Omit<
+    ComponentProps<typeof InputOTP>,
+    "maxLength" | "render" | "children"
+  >,
+) => (
+  <InputOTP
+    maxLength={OTP_LENGTH}
+    inputMode="numeric"
+    autoComplete="one-time-code"
+    containerClassName="w-full"
+    className="w-full"
+    {...props}
+  >
+    <InputOTPGroup className="w-full justify-between">
+      {Array.from({ length: OTP_LENGTH }, (_, index) => (
+        <InputOTPSlot
+          key={index}
+          index={index}
+          className="h-12 min-w-0 flex-1 font-mono text-lg"
+        />
+      ))}
+    </InputOTPGroup>
+  </InputOTP>
+);
 
 const normalizeId = (id: string) =>
   (id ?? "").trim().replace(/-/g, "").replace(/ /g, "");
@@ -372,7 +409,7 @@ const EnterIdentifier: FC<EnterIdentifierProps> = ({ setMemory, goTo }) => {
           e.stopPropagation();
           form.handleSubmit(onSubmitCreate)(e);
         }}
-        className="mt-4 space-y-4"
+        className="space-y-5"
       >
         <FormField
           control={form.control}
@@ -401,15 +438,15 @@ const EnterIdentifier: FC<EnterIdentifierProps> = ({ setMemory, goTo }) => {
               `disclaimer_${disclaimerIndex}` as keyof EnterIdentifierFormValues
             }
             render={({ field }) => (
-              <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+              <FormItem className="flex items-start gap-3">
                 <FormControl>
                   <Checkbox
                     checked={field.value as boolean}
                     onCheckedChange={field.onChange}
                   />
                 </FormControl>
-                <div className="space-y-1 leading-none">
-                  <FormLabel className="text-sm font-normal">
+                <div className="min-w-0 space-y-1">
+                  <FormLabel className="block leading-5 font-normal">
                     <Trans
                       t={t}
                       i18nKey={`abha__disclaimer_${disclaimerIndex}`}
@@ -420,7 +457,7 @@ const EnterIdentifier: FC<EnterIdentifierProps> = ({ setMemory, goTo }) => {
                             control={form.control}
                             name="name"
                             render={({ field: nameField }) => (
-                              <FormItem className="inline-block w-auto ml-1">
+                              <FormItem className="mx-1 inline-block w-auto align-middle">
                                 <FormControl>
                                   <Input
                                     {...nameField}
@@ -457,7 +494,7 @@ const EnterIdentifier: FC<EnterIdentifierProps> = ({ setMemory, goTo }) => {
         </div>
 
         {isCreateFlow ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <Button
               type="submit"
               variant="default"
@@ -465,7 +502,7 @@ const EnterIdentifier: FC<EnterIdentifierProps> = ({ setMemory, goTo }) => {
               disabled={!form.formState.isValid}
               className={cn(
                 "w-full",
-                !healthFacility?.benefit_name && "col-span-2"
+                !healthFacility?.benefit_name && "md:col-span-2",
               )}
             >
               {t("verify_with_otp")}
@@ -534,7 +571,7 @@ const EnterIdentifier: FC<EnterIdentifierProps> = ({ setMemory, goTo }) => {
             <PopoverTrigger asChild>
               <Button
                 type="button"
-                variant="secondary"
+                className="w-full"
                 disabled={!form.formState.isValid}
                 loading={checkAuthMethodsMutation.isPending}
                 onClick={(e) => {
@@ -547,7 +584,7 @@ const EnterIdentifier: FC<EnterIdentifierProps> = ({ setMemory, goTo }) => {
             </PopoverTrigger>
             <PopoverContent
               align="start"
-              className="flex flex-col p-2 gap-2"
+              className="w-(--anchor-width) gap-1 p-1"
             >
               {authMethods.map((method) => {
                 const otpSystem =
@@ -560,7 +597,7 @@ const EnterIdentifier: FC<EnterIdentifierProps> = ({ setMemory, goTo }) => {
                   <Button
                     key={method}
                     type="button"
-                    variant="default"
+                    variant="ghost"
                     className="w-full justify-start"
                     disabled={sendOtpMutation.isPending}
                     onClick={() => {
@@ -691,7 +728,7 @@ const VerifyId: FC<VerifyIdProps> = ({
           e.stopPropagation();
           form.handleSubmit(onSubmit)(e);
         }}
-        className="mt-6 space-y-4"
+        className="space-y-5"
       >
         <FormField
           control={form.control}
@@ -709,32 +746,34 @@ const VerifyId: FC<VerifyIdProps> = ({
           )}
         />
 
-        <div className="flex flex-col gap-2 w-fit">
-          <FormField
-            control={form.control}
-            name="otp"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>One-Time Password</FormLabel>
-                <FormControl>
-                  <InputOTP autoFocus maxLength={6} {...field}>
-                    <InputOTPGroup>
-                      <InputOTPSlot index={0} />
-                      <InputOTPSlot index={1} />
-                      <InputOTPSlot index={2} />
-                      <InputOTPSlot index={3} />
-                      <InputOTPSlot index={4} />
-                      <InputOTPSlot index={5} />
-                    </InputOTPGroup>
-                  </InputOTP>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+        <FormField
+          control={form.control}
+          name="otp"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>One-Time Password</FormLabel>
+              <FormControl>
+                <OtpInput autoFocus {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="flex flex-col gap-2">
+          <Button
+            type="submit"
+            variant="default"
+            className="w-full"
+            loading={verifyOtpMutation.isPending || verifyUserMutation.isPending}
+          >
+            {t("verify_and_link")}
+          </Button>
           <ButtonWithTimer
             type="button"
-            variant="secondary"
+            variant="ghost"
+            className="w-full underline underline-offset-4"
+            countdownLabel={(seconds) => t("resend_otp_timer", { time: seconds })}
             disabled={form.getValues("_resendOtpCount") >= MAX_OTP_RESEND_COUNT}
             onClick={() => {
               if (!memory?.id || !memory.idType || !memory.otpSystem) return;
@@ -754,14 +793,6 @@ const VerifyId: FC<VerifyIdProps> = ({
             {t("resend_otp")}
           </ButtonWithTimer>
         </div>
-
-        <Button
-          type="submit"
-          variant="default"
-          loading={verifyOtpMutation.isPending || verifyUserMutation.isPending}
-        >
-          {t("verify_and_link")}
-        </Button>
       </form>
     </Form>
   );
@@ -790,12 +821,10 @@ const ChooseAbhaAccount: FC<ChooseAbhaAccountProps> = ({
   });
 
   return (
-    <div className="mt-6 space-y-4">
+    <div className="space-y-5">
       <div>
-        <h3 className="text-lg font-medium text-secondary-800">
-          {t("choose_abha_account")}
-        </h3>
-        <p className="text-sm text-secondary-600">
+        <h3 className="text-base font-semibold">{t("choose_abha_account")}</h3>
+        <p className="text-sm text-muted-foreground">
           {t("choose_abha_account_description")}
         </p>
       </div>
@@ -814,10 +843,7 @@ const ChooseAbhaAccount: FC<ChooseAbhaAccountProps> = ({
                 account_id: account.id,
               });
             }}
-            className={cn(
-              "flex items-center gap-3 rounded-md border border-secondary-300 p-3 text-left transition-colors hover:border-primary-400 hover:bg-primary-50",
-              verifyUserMutation.isPending && "cursor-not-allowed opacity-60",
-            )}
+            className="flex items-center gap-3 rounded-md border border-border bg-card p-3 text-left shadow-xs transition-colors outline-none hover:bg-muted focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50"
           >
             {account.profile_photo ? (
               <img
@@ -826,22 +852,22 @@ const ChooseAbhaAccount: FC<ChooseAbhaAccountProps> = ({
                 className="size-10 rounded-full object-cover"
               />
             ) : (
-              <div className="flex size-10 items-center justify-center rounded-full bg-primary-100 text-sm font-medium text-primary-700">
+              <div className="flex size-10 items-center justify-center rounded-full bg-primary-100 text-sm font-medium text-primary-900">
                 {(account.name ?? "?").charAt(0).toUpperCase()}
               </div>
             )}
 
-            <div className="flex flex-col">
-              <span className="text-sm font-medium text-secondary-800">
+            <div className="flex min-w-0 flex-col">
+              <span className="text-sm font-medium">
                 {account.name ?? t("abha_account")}
               </span>
               {account.abha_number && (
-                <span className="text-xs text-secondary-600">
+                <span className="text-xs text-muted-foreground">
                   {account.abha_number}
                 </span>
               )}
               {account.preferred_abha_address && (
-                <span className="text-xs text-secondary-600">
+                <span className="text-xs text-muted-foreground">
                   {account.preferred_abha_address}
                 </span>
               )}
@@ -936,7 +962,7 @@ const VerifyAadhaarWithOtp: FC<VerifyAadhaarWithOtpProps> = ({
           e.stopPropagation();
           form.handleSubmit(onSubmit)(e);
         }}
-        className="mt-6 space-y-4"
+        className="space-y-5"
       >
         <FormField
           control={form.control}
@@ -959,47 +985,19 @@ const VerifyAadhaarWithOtp: FC<VerifyAadhaarWithOtpProps> = ({
           )}
         />
 
-        <div className="flex flex-col gap-2 w-fit">
-          <FormField
-            control={form.control}
-            name="otp"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>One-Time Password</FormLabel>
-                <FormControl>
-                  <InputOTP autoFocus maxLength={6} {...field}>
-                    <InputOTPGroup>
-                      <InputOTPSlot index={0} />
-                      <InputOTPSlot index={1} />
-                      <InputOTPSlot index={2} />
-                      <InputOTPSlot index={3} />
-                      <InputOTPSlot index={4} />
-                      <InputOTPSlot index={5} />
-                    </InputOTPGroup>
-                  </InputOTP>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <ButtonWithTimer
-            type="button"
-            variant="secondary"
-            disabled={form.getValues("_resendOtpCount") >= MAX_OTP_RESEND_COUNT}
-            onClick={() => {
-              form.setValue(
-                "_resendOtpCount",
-                form.getValues("_resendOtpCount") + 1
-              );
-              resendAadhaarOtpMutation.mutate({
-                aadhaar: form.getValues("_aadhaar"),
-              });
-            }}
-            loading={resendAadhaarOtpMutation.isPending}
-          >
-            {t("resend_otp")}
-          </ButtonWithTimer>
-        </div>
+        <FormField
+          control={form.control}
+          name="otp"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>One-Time Password</FormLabel>
+              <FormControl>
+                <OtpInput autoFocus {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <FormField
           control={form.control}
@@ -1019,13 +1017,35 @@ const VerifyAadhaarWithOtp: FC<VerifyAadhaarWithOtpProps> = ({
           )}
         />
 
-        <Button
-          type="submit"
-          variant="default"
-          loading={verifyAadhaarOtpMutation.isPending}
-        >
-          {t("verify_otp")}
-        </Button>
+        <div className="flex flex-col gap-2">
+          <Button
+            type="submit"
+            variant="default"
+            className="w-full"
+            loading={verifyAadhaarOtpMutation.isPending}
+          >
+            {t("verify_otp")}
+          </Button>
+          <ButtonWithTimer
+            type="button"
+            variant="ghost"
+            className="w-full underline underline-offset-4"
+            countdownLabel={(seconds) => t("resend_otp_timer", { time: seconds })}
+            disabled={form.getValues("_resendOtpCount") >= MAX_OTP_RESEND_COUNT}
+            onClick={() => {
+              form.setValue(
+                "_resendOtpCount",
+                form.getValues("_resendOtpCount") + 1
+              );
+              resendAadhaarOtpMutation.mutate({
+                aadhaar: form.getValues("_aadhaar"),
+              });
+            }}
+            loading={resendAadhaarOtpMutation.isPending}
+          >
+            {t("resend_otp")}
+          </ButtonWithTimer>
+        </div>
       </form>
     </Form>
   );
@@ -1143,7 +1163,7 @@ const VerifyAadhaarWithDemographics: FC<VerifyAadhaarWithDemographicsProps> = ({
           e.stopPropagation();
           form.handleSubmit(onSubmit)(e);
         }}
-        className="mt-6 space-y-4"
+        className="space-y-5"
       >
         <FormField
           control={form.control}
@@ -1166,16 +1186,13 @@ const VerifyAadhaarWithDemographics: FC<VerifyAadhaarWithDemographicsProps> = ({
           )}
         />
 
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-5">
           <FormField
             control={form.control}
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>
-                  Name
-                  <span className="text-xs text-danger-500">*</span>
-                </FormLabel>
+                <FormLabel aria-required>Name</FormLabel>
                 <FormControl>
                   <Input
                     placeholder="Enter your name as per Aadhaar"
@@ -1195,9 +1212,7 @@ const VerifyAadhaarWithDemographics: FC<VerifyAadhaarWithDemographicsProps> = ({
             name="gender"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>
-                  Gender <span className="text-xs text-danger-500">*</span>
-                </FormLabel>
+                <FormLabel aria-required>Gender</FormLabel>
                 <Select
                   onValueChange={field.onChange}
                   defaultValue={field.value}
@@ -1228,11 +1243,8 @@ const VerifyAadhaarWithDemographics: FC<VerifyAadhaarWithDemographicsProps> = ({
             control={form.control}
             name="date_of_birth"
             render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel>
-                  Date of Birth{" "}
-                  <span className="text-xs text-danger-500">*</span>
-                </FormLabel>
+              <FormItem>
+                <FormLabel aria-required>Date of Birth</FormLabel>
                 <FormControl>
                   <Input type="date" {...field} />
                 </FormControl>
@@ -1246,9 +1258,7 @@ const VerifyAadhaarWithDemographics: FC<VerifyAadhaarWithDemographicsProps> = ({
             name="state_code"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>
-                  State <span className="text-xs text-danger-500">*</span>
-                </FormLabel>
+                <FormLabel aria-required>State</FormLabel>
                 <Select
                   onValueChange={(value) => field.onChange(Number(value))}
                   defaultValue={field.value?.toString()}
@@ -1279,9 +1289,7 @@ const VerifyAadhaarWithDemographics: FC<VerifyAadhaarWithDemographicsProps> = ({
             name="district_code"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>
-                  District <span className="text-xs text-danger-500">*</span>
-                </FormLabel>
+                <FormLabel aria-required>District</FormLabel>
                 <Select
                   onValueChange={(value) => field.onChange(Number(value))}
                   defaultValue={field.value?.toString()}
@@ -1359,6 +1367,7 @@ const VerifyAadhaarWithDemographics: FC<VerifyAadhaarWithDemographicsProps> = ({
         <Button
           type="submit"
           variant="default"
+          className="w-full"
           loading={verifyAadhaarDemographicsMutation.isPending}
         >
           {t("verify_demographics")}
@@ -1497,7 +1506,7 @@ const VerifyAadhaarWithFace: FC<VerifyAadhaarWithFaceProps> = ({
           e.stopPropagation();
           form.handleSubmit(onSubmit)(e);
         }}
-        className="mt-6 space-y-4"
+        className="space-y-5"
       >
         <FormField
           control={form.control}
@@ -1540,20 +1549,23 @@ const VerifyAadhaarWithFace: FC<VerifyAadhaarWithFaceProps> = ({
         />
 
         {authInitViaFaceMutation.isSuccess && (
-          <div className="flex flex-col items-center justify-center border-2 border-dashed border-secondary-600 rounded-lg p-4">
+          <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-strong-border bg-white p-4">
             <QRCodeSVG
               value={`${faceAuthUrl}?txnId=${authInitViaFaceMutation.data?.transaction_id}`}
-              className="size-80 text-secondary-500 rounded-lg"
+              className="h-auto w-full max-w-80"
             />
           </div>
         )}
 
-        {memory?.error && <div className="text-red-500">{memory.error}</div>}
+        {memory?.error && (
+          <p className="text-sm text-destructive">{memory.error}</p>
+        )}
         {(!authInitViaFaceMutation.isSuccess ||
           ((memory?.retryCount ?? 0) < 3 && memory?.error)) && (
           <Button
             type="button"
             variant="default"
+            className="w-full"
             loading={authInitViaFaceMutation.isPending}
             disabled={!form.formState.isValid}
             onClick={() => {
@@ -1692,7 +1704,7 @@ const VerifyAadhaarWithBio: FC<VerifyAadhaarWithBioProps> = ({
           e.stopPropagation();
           form.handleSubmit(onSubmit)(e);
         }}
-        className="mt-6 space-y-4"
+        className="space-y-5"
       >
         <FormField
           control={form.control}
@@ -1723,27 +1735,27 @@ const VerifyAadhaarWithBio: FC<VerifyAadhaarWithBioProps> = ({
               <FormLabel>Fingerprint</FormLabel>
               <FormControl>
                 <div className="flex flex-col gap-2">
-                  <div className="flex flex-col items-center justify-center gap-4 rounded-lg border border-dashed border-secondary-200 p-8">
+                  <div className="flex flex-col items-center justify-center gap-4 rounded-lg border border-dashed border-strong-border bg-muted-background p-8">
                     <div
                       className={cn(
-                        "flex h-32 w-32 items-center justify-center rounded-full bg-primary-50 transition-all duration-500",
+                        "flex size-32 items-center justify-center rounded-full bg-primary-50 transition-all duration-500",
                         captureFingerprintStatus === "success" && "bg-green-50",
-                        captureFingerprintStatus === "error" && "bg-red-50"
+                        captureFingerprintStatus === "error" && "bg-red-50",
                       )}
                     >
-                      <div className="relative w-16 h-16">
+                      <div className="relative size-16">
                         <FingerprintIcon
                           className={cn(
-                            "w-full h-full",
+                            "size-full",
                             captureFingerprintStatus === "success"
                               ? "text-primary-500"
                               : captureFingerprintStatus === "error"
-                              ? "text-danger-500"
-                              : "text-gray-300"
+                                ? "text-destructive"
+                                : "text-disabled-foreground",
                           )}
                         />
                         <FingerprintIcon
-                          className="absolute inset-0 text-gray-300 w-full h-full animate-fill-up"
+                          className="absolute inset-0 size-full animate-fill-up text-disabled-foreground"
                           style={{
                             maskImage:
                               "linear-gradient(to top, black 50%, transparent 50%)",
@@ -1781,9 +1793,10 @@ const VerifyAadhaarWithBio: FC<VerifyAadhaarWithBioProps> = ({
                         "text-base font-medium transition-colors duration-500",
                         captureFingerprintStatus === "success" &&
                           "text-green-600",
-                        captureFingerprintStatus === "error" && "text-red-600",
+                        captureFingerprintStatus === "error" &&
+                          "text-destructive",
                         captureFingerprintStatus === "pending" &&
-                          "text-secondary-900"
+                          "text-foreground",
                       )}
                     >
                       {captureFingerprintStatus === "success"
@@ -1793,7 +1806,7 @@ const VerifyAadhaarWithBio: FC<VerifyAadhaarWithBioProps> = ({
                         : t("follow_the_rd_instructions")}
                     </h3>
                     {captureFingerprintStatus === "pending" && (
-                      <p className="mt-1 text-sm text-secondary-500">
+                      <p className="mt-1 text-sm text-muted-foreground">
                         {t("fingerprint_scan_instructions")}
                       </p>
                     )}
@@ -1826,6 +1839,7 @@ const VerifyAadhaarWithBio: FC<VerifyAadhaarWithBioProps> = ({
         <Button
           type="submit"
           variant="default"
+          className="w-full"
           loading={verifyAadhaarBioMutation.isPending}
           disabled={!form.formState.isValid}
         >
@@ -1849,13 +1863,11 @@ const HandleExistingAbha: FC<HandleExistingAbhaProps> = ({ memory, goTo }) => {
 
   return (
     <div>
-      <h2 className="text-xl font-semibold text-secondary-800">
-        {t("abha_number_exists")}
-      </h2>
-      <p className="text-sm text-secondary-800">
+      <h3 className="text-base font-semibold">{t("abha_number_exists")}</h3>
+      <p className="text-sm text-muted-foreground">
         {t("abha_number_exists_description")}
       </p>
-      <div className="mt-4 flex flex-col items-center justify-center gap-2">
+      <div className="mt-5 flex flex-col items-center justify-center gap-3">
         <Button
           type="button"
           variant="default"
@@ -1880,7 +1892,7 @@ const HandleExistingAbha: FC<HandleExistingAbhaProps> = ({ memory, goTo }) => {
         >
           {t("use_existing_abha_address")}
         </Button>
-        <p className="text-xs text-secondary-800">
+        <p className="text-xs text-muted-foreground">
           {memory?.abhaNumber?.health_id}
         </p>
       </div>
@@ -1945,7 +1957,7 @@ const LinkMobile: FC<LinkMobileProps> = ({ memory, setMemory, goTo }) => {
           e.stopPropagation();
           form.handleSubmit(onSubmit)(e);
         }}
-        className="mt-6 space-y-4"
+        className="space-y-5"
       >
         <FormField
           control={form.control}
@@ -1968,6 +1980,7 @@ const LinkMobile: FC<LinkMobileProps> = ({ memory, setMemory, goTo }) => {
         <Button
           type="submit"
           variant="default"
+          className="w-full"
           loading={linkMobileMutation.isPending}
         >
           {t("send_otp")}
@@ -2047,7 +2060,7 @@ const VerifyMobile: FC<VerifyMobileProps> = ({ memory, setMemory, goTo }) => {
           e.stopPropagation();
           form.handleSubmit(onSubmit)(e);
         }}
-        className="mt-6 space-y-4"
+        className="space-y-5"
       >
         <FormField
           control={form.control}
@@ -2067,32 +2080,34 @@ const VerifyMobile: FC<VerifyMobileProps> = ({ memory, setMemory, goTo }) => {
           )}
         />
 
-        <div className="flex flex-col gap-2 w-fit">
-          <FormField
-            control={form.control}
-            name="otp"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>One-Time Password</FormLabel>
-                <FormControl>
-                  <InputOTP autoFocus maxLength={6} {...field}>
-                    <InputOTPGroup>
-                      <InputOTPSlot index={0} />
-                      <InputOTPSlot index={1} />
-                      <InputOTPSlot index={2} />
-                      <InputOTPSlot index={3} />
-                      <InputOTPSlot index={4} />
-                      <InputOTPSlot index={5} />
-                    </InputOTPGroup>
-                  </InputOTP>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+        <FormField
+          control={form.control}
+          name="otp"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>One-Time Password</FormLabel>
+              <FormControl>
+                <OtpInput autoFocus {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="flex flex-col gap-2">
+          <Button
+            type="submit"
+            variant="default"
+            className="w-full"
+            loading={verifyMobileOtpMutation.isPending}
+          >
+            {t("verify_otp")}
+          </Button>
           <ButtonWithTimer
             type="button"
-            variant="secondary"
+            variant="ghost"
+            className="w-full underline underline-offset-4"
+            countdownLabel={(seconds) => t("resend_otp_timer", { time: seconds })}
             disabled={form.getValues("_resendOtpCount") >= MAX_OTP_RESEND_COUNT}
             onClick={() => {
               if (!memory?.transactionId) return;
@@ -2111,14 +2126,6 @@ const VerifyMobile: FC<VerifyMobileProps> = ({ memory, setMemory, goTo }) => {
             {t("resend_otp")}
           </ButtonWithTimer>
         </div>
-
-        <Button
-          type="submit"
-          variant="default"
-          loading={verifyMobileOtpMutation.isPending}
-        >
-          {t("verify_otp")}
-        </Button>
       </form>
     </Form>
   );
@@ -2130,23 +2137,23 @@ const validateRule = (
   isInitialState: boolean = false
 ) => {
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-1.5">
       <span>
         {isInitialState ? (
-          <CircleIcon className="size-4 text-gray-500" />
+          <CircleIcon className="size-4 text-muted-foreground" />
         ) : condition ? (
-          <CircleCheckIcon className="size-4 text-green-500" />
+          <CircleCheckIcon className="size-4 text-primary" />
         ) : (
-          <CircleXIcon className="size-4 text-red-500" />
+          <CircleXIcon className="size-4 text-destructive" />
         )}
       </span>
       <span
         className={cn(
           isInitialState
-            ? "text-black"
+            ? "text-foreground"
             : condition
-            ? "text-primary-500"
-            : "text-red-500"
+              ? "text-primary"
+              : "text-destructive",
         )}
       >
         {content}
@@ -2232,7 +2239,7 @@ const ChooseAbhaAddress: FC<ChooseAbhaAddressProps> = ({
           e.stopPropagation();
           form.handleSubmit(onSubmit)(e);
         }}
-        className="mt-6 space-y-4"
+        className="space-y-5"
       >
         <FormField
           control={form.control}
@@ -2274,7 +2281,7 @@ const ChooseAbhaAddress: FC<ChooseAbhaAddressProps> = ({
 
         {suggestions.length > 0 && (
           <div>
-            <h4 className="text-sm text-secondary-800">
+            <h4 className="text-sm font-medium">
               {t("abha_address_suggestions")}
             </h4>
             <div className="mt-2 flex flex-wrap items-end gap-2">
@@ -2283,13 +2290,14 @@ const ChooseAbhaAddress: FC<ChooseAbhaAddressProps> = ({
                   (suggestion) => suggestion !== form.watch("abhaAddress")
                 )
                 .map((suggestion) => (
-                  <p
-                    key={suggestion}
-                    onClick={() => form.setValue("abhaAddress", suggestion)}
-                    className="cursor-pointer rounded-md bg-primary-400 px-2.5 py-1 text-xs text-white"
-                  >
-                    {suggestion}
-                  </p>
+                  <Badge key={suggestion} variant="primary" asChild>
+                    <button
+                      type="button"
+                      onClick={() => form.setValue("abhaAddress", suggestion)}
+                    >
+                      {suggestion}
+                    </button>
+                  </Badge>
                 ))}
             </div>
           </div>
@@ -2298,6 +2306,7 @@ const ChooseAbhaAddress: FC<ChooseAbhaAddressProps> = ({
         <Button
           type="submit"
           variant="default"
+          className="w-full"
           loading={enrollAbhaAddressMutation.isPending}
         >
           {t("create_abha_address")}

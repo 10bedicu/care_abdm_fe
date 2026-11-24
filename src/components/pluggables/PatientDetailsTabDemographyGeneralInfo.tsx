@@ -1,6 +1,7 @@
 import { FileDownIcon, ImageDownIcon } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
+import { AbdmScope } from "@/components/AbdmScope";
 import { Button } from "@/components/ui/button";
 import { FC } from "react";
 import { I18NNAMESPACE } from "@/lib/constants";
@@ -77,45 +78,47 @@ const PatientDetailsTabDemographyGeneralInfo: FC<
   }
 
   return (
-    <div className="abdm-container sm:col-span-2">
-      <div className="mr-6 flex flex-col items-start justify-between rounded-md border border-blue-400 bg-blue-50 p-4 sm:flex-row">
+    <AbdmScope>
+      {/* Sits in the host's details grid, styled like its emergency contact card. */}
+      <div className="mr-6 flex flex-col items-start justify-between gap-4 rounded-md border border-blue-300 bg-blue-50 p-4 sm:col-span-2 sm:flex-row dark:border-blue-400/35 dark:bg-blue-400/15">
         <div className="flex-1">
-          <div className="text-sm font-normal leading-5 text-gray-600">
+          <div className="text-sm leading-5 text-soft-foreground">
             {t("abha_number")}
           </div>
-
-          <div className="mt-1 text-sm font-semibold leading-5 text-gray-900">
+          <div className="mt-1 text-sm leading-5 font-semibold text-foreground">
             {abhaNumber.abha_number || "-"}
           </div>
         </div>
 
-        <div className="ml-0 mt-4 flex-1 sm:ml-4 sm:mt-0">
-          <div className="text-sm font-normal leading-5 text-gray-600">
+        <div className="flex-1">
+          <div className="text-sm leading-5 text-soft-foreground">
             {t("abha_address")}
           </div>
-          <div className="mt-1 text-sm font-semibold leading-5 text-gray-900">
+          <div className="mt-1 text-sm leading-5 font-semibold text-foreground">
             {abhaNumber.health_id || "-"}
           </div>
         </div>
 
-        <div className="ml-0 mt-4 sm:ml-4 sm:mt-0 flex">
+        <div className="flex">
           <Button
             size="icon"
             variant="ghost"
+            aria-label={t("download_abha_card")}
             onClick={() => downloadAbhaCard("png")}
           >
-            <ImageDownIcon className="h-4 w-4" />
+            <ImageDownIcon />
           </Button>
           <Button
             size="icon"
             variant="ghost"
+            aria-label={t("print_abha_card")}
             onClick={() => downloadAbhaCard("pdf")}
           >
-            <FileDownIcon className="h-4 w-4" />
+            <FileDownIcon />
           </Button>
         </div>
       </div>
-    </div>
+    </AbdmScope>
   );
 };
 

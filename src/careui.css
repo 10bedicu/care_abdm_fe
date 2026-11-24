@@ -1,0 +1,295 @@
+/*
+ * The parts of the CareUI theme that the components in `components/ui` need.
+ * Source: care_fe/src/style/careui.css (ohcnetwork/careui @ 4e143863).
+ *
+ * The host's :root owns every token value (--background, --primary, the
+ * palettes, --radius, fonts, accessibility themes). This file only tells
+ * Tailwind how utilities map onto those tokens: `reference` keeps the plugin
+ * from emitting theme variables of its own, so nothing here can override the
+ * host. When CareUI changes in care_fe, copy the matching blocks again.
+ */
+
+@custom-variant dark (&:is(.dark *));
+
+@theme reference inline {
+  --font-sans: var(--font-figtree, "Figtree Variable", sans-serif);
+  --font-mono: var(
+    --font-geist-mono,
+    "Geist Mono Variable",
+    ui-monospace,
+    monospace
+  );
+
+  --color-background: var(--background);
+  --color-soft-background: var(--soft-background);
+  --color-muted-background: var(--muted-background);
+  --color-strong-background: var(--strong-background);
+  --color-muted: var(--muted);
+
+  --color-foreground: var(--foreground);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-soft-foreground: var(--soft-foreground);
+  --color-disabled-foreground: var(--disabled-foreground);
+  --color-placeholder-foreground: var(--placeholder-foreground);
+  --color-inverse-foreground: var(--inverse-foreground);
+
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+
+  --color-border: var(--border);
+  --color-strong-border: var(--strong-border);
+  --color-stronger-border: var(--stronger-border);
+  --color-soft-border: var(--soft-border);
+  --color-inverse-border: var(--inverse-border);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+
+  /* Primary color scale */
+  --color-primary-50: var(--primary-50);
+  --color-primary-100: var(--primary-100);
+  --color-primary-200: var(--primary-200);
+  --color-primary-300: var(--primary-300);
+  --color-primary-400: var(--primary-400);
+  --color-primary-500: var(--primary-500);
+  --color-primary-600: var(--primary-600);
+  --color-primary-700: var(--primary-700);
+  --color-primary-800: var(--primary-800);
+  --color-primary-900: var(--primary-900);
+  --color-primary-950: var(--primary-950);
+}
+
+/* Squircle utilities */
+
+@utility rounded-squircle-sm {
+  @supports (corner-shape: superellipse(1.6)) {
+    @apply rounded-sm!;
+    corner-shape: superellipse(1.6);
+  }
+}
+
+@utility rounded-squircle-md {
+  @supports (corner-shape: superellipse(1.6)) {
+    @apply rounded-lg!;
+    corner-shape: superellipse(1.6);
+  }
+}
+
+@utility rounded-squircle-lg {
+  @supports (corner-shape: superellipse(1.6)) {
+    @apply rounded-lg!;
+    corner-shape: superellipse(1.6);
+  }
+}
+
+@utility rounded-squircle-xl {
+  @supports (corner-shape: superellipse(1.6)) {
+    @apply rounded-xl!;
+    corner-shape: superellipse(1.6);
+  }
+}
+
+@utility rounded-squircle-2xl {
+  @supports (corner-shape: superellipse(1.6)) {
+    @apply rounded-xl!;
+    corner-shape: superellipse(1.6);
+  }
+}
+
+@utility rounded-squircle-3xl {
+  @supports (corner-shape: superellipse(1.6)) {
+    @apply rounded-3xl!;
+    corner-shape: superellipse(1.6);
+  }
+}
+
+@utility rounded-squircle-full {
+  @supports (corner-shape: superellipse(1)) {
+    @apply rounded-full!;
+    corner-shape: superellipse(1);
+  }
+}
+
+/* Hit-area utilities */
+
+@utility hit-area {
+  position: relative;
+  &::before {
+    content: "";
+    position: absolute;
+    top: var(--hit-area-t, 0px);
+    right: var(--hit-area-r, 0px);
+    bottom: var(--hit-area-b, 0px);
+    left: var(--hit-area-l, 0px);
+    pointer-events: inherit;
+  }
+}
+
+@utility hit-area-* {
+  position: relative;
+  --hit-area-t: --spacing(--value(number) * -1);
+  --hit-area-t: calc(--value([*]) * -1);
+  --hit-area-b: --spacing(--value(number) * -1);
+  --hit-area-b: calc(--value([*]) * -1);
+  --hit-area-l: --spacing(--value(number) * -1);
+  --hit-area-l: calc(--value([*]) * -1);
+  --hit-area-r: --spacing(--value(number) * -1);
+  --hit-area-r: calc(--value([*]) * -1);
+  &::before {
+    content: "";
+    position: absolute;
+    top: var(--hit-area-t, 0px);
+    right: var(--hit-area-r, 0px);
+    bottom: var(--hit-area-b, 0px);
+    left: var(--hit-area-l, 0px);
+    pointer-events: inherit;
+  }
+}
+
+@utility hit-area-l-* {
+  position: relative;
+  --hit-area-l: --spacing(--value(number) * -1);
+  --hit-area-l: calc(--value([*]) * -1);
+  &::before {
+    content: "";
+    position: absolute;
+    top: var(--hit-area-t, 0px);
+    right: var(--hit-area-r, 0px);
+    bottom: var(--hit-area-b, 0px);
+    left: var(--hit-area-l, 0px);
+    pointer-events: inherit;
+  }
+}
+
+@utility hit-area-r-* {
+  position: relative;
+  --hit-area-r: --spacing(--value(number) * -1);
+  --hit-area-r: calc(--value([*]) * -1);
+  &::before {
+    content: "";
+    position: absolute;
+    top: var(--hit-area-t, 0px);
+    right: var(--hit-area-r, 0px);
+    bottom: var(--hit-area-b, 0px);
+    left: var(--hit-area-l, 0px);
+    pointer-events: inherit;
+  }
+}
+
+@utility hit-area-t-* {
+  position: relative;
+  --hit-area-t: --spacing(--value(number) * -1);
+  --hit-area-t: calc(--value([*]) * -1);
+  &::before {
+    content: "";
+    position: absolute;
+    top: var(--hit-area-t, 0px);
+    right: var(--hit-area-r, 0px);
+    bottom: var(--hit-area-b, 0px);
+    left: var(--hit-area-l, 0px);
+    pointer-events: inherit;
+  }
+}
+
+@utility hit-area-b-* {
+  position: relative;
+  --hit-area-b: --spacing(--value(number) * -1);
+  --hit-area-b: calc(--value([*]) * -1);
+  &::before {
+    content: "";
+    position: absolute;
+    top: var(--hit-area-t, 0px);
+    right: var(--hit-area-r, 0px);
+    bottom: var(--hit-area-b, 0px);
+    left: var(--hit-area-l, 0px);
+    pointer-events: inherit;
+  }
+}
+
+@utility hit-area-x-* {
+  position: relative;
+  --hit-area-l: --spacing(--value(number) * -1);
+  --hit-area-l: calc(--value([*]) * -1);
+  --hit-area-r: --spacing(--value(number) * -1);
+  --hit-area-r: calc(--value([*]) * -1);
+  &::before {
+    content: "";
+    position: absolute;
+    top: var(--hit-area-t, 0px);
+    right: var(--hit-area-r, 0px);
+    bottom: var(--hit-area-b, 0px);
+    left: var(--hit-area-l, 0px);
+    pointer-events: inherit;
+  }
+}
+
+@utility hit-area-y-* {
+  position: relative;
+  --hit-area-t: --spacing(--value(number) * -1);
+  --hit-area-t: calc(--value([*]) * -1);
+  --hit-area-b: --spacing(--value(number) * -1);
+  --hit-area-b: calc(--value([*]) * -1);
+  &::before {
+    content: "";
+    position: absolute;
+    top: var(--hit-area-t, 0px);
+    right: var(--hit-area-r, 0px);
+    bottom: var(--hit-area-b, 0px);
+    left: var(--hit-area-l, 0px);
+    pointer-events: inherit;
+  }
+}
+
+/* Sheet close-button shake (`--animate-sheet-shake` in careui.css) */
+
+@utility animate-sheet-shake {
+  animation: sheet-shake 0.4s ease;
+}
+
+@keyframes sheet-shake {
+  0%,
+  100% {
+    transform: translateX(0) rotate(0deg);
+  }
+  15% {
+    transform: translateX(-4px) rotate(-6deg);
+  }
+  30% {
+    transform: translateX(4px) rotate(6deg);
+  }
+  45% {
+    transform: translateX(-3px) rotate(-4deg);
+  }
+  60% {
+    transform: translateX(3px) rotate(4deg);
+  }
+  75% {
+    transform: translateX(-2px) rotate(-2deg);
+  }
+  90% {
+    transform: translateX(2px) rotate(2deg);
+  }
+}
