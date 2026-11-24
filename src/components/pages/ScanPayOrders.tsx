@@ -1,6 +1,6 @@
 import { FC, useEffect, useMemo, useState } from "react";
 import { ExternalLinkIcon, InfoIcon, RefreshCwIcon } from "lucide-react";
-import { Link, useQueryParams } from "raviger";
+import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { DateRange } from "react-day-picker";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -120,7 +120,7 @@ const OrderReferences = ({
       label: t("scan_pay__col_invoice"),
       value:
         invoice && href ? (
-          <Link href={href} className="font-medium text-primary-700 hover:underline">
+          <Link to={href} className="font-medium text-primary-700 hover:underline">
             {invoiceLabel}
           </Link>
         ) : (
@@ -217,7 +217,10 @@ const OrderActions = ({
 
 const ScanPayOrders: FC<ScanPayOrdersProps> = ({ facilityId }) => {
   const { t } = useTranslation(I18NNAMESPACE);
-  const [qParams, setQueryParams] = useQueryParams<{ autoRefresh?: string }>();
+  const { autoRefresh } = useSearch({ strict: false }) as {
+    autoRefresh?: string;
+  };
+  const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>("pending");
   const [search, setSearch] = useState("");
   const [dateRange, setDateRange] = useState<DateRange>();
@@ -228,7 +231,7 @@ const ScanPayOrders: FC<ScanPayOrdersProps> = ({ facilityId }) => {
   const [refreshing, setRefreshing] = useState(false);
 
   const shouldAutoRefresh = booleanFromString(
-    qParams.autoRefresh,
+    autoRefresh,
     window.__CORE_ENV__?.enableAutoRefresh === true,
   );
   const pollIntervalMs = refreshIntervalMs();
@@ -328,10 +331,15 @@ const ScanPayOrders: FC<ScanPayOrdersProps> = ({ facilityId }) => {
             id="scan-pay-auto-refresh"
             checked={shouldAutoRefresh}
             onCheckedChange={(checked) =>
-              setQueryParams(
-                { autoRefresh: checked ? "true" : "false" },
-                { replace: true, overwrite: false },
-              )
+              navigate({
+                to: ".",
+                unsafeRelative: "path",
+                search: (prev: Record<string, unknown>) => ({
+                  ...prev,
+                  autoRefresh: checked ? "true" : "false",
+                }),
+                replace: true,
+              })
             }
           />
           <TooltipProvider>
