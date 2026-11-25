@@ -118,7 +118,9 @@ const PatientCard: FC<{ patient: Patient; facilityId: string }> = ({
 }) => {
   const navigate = useNavigate();
   const yearOfBirth = useMemo(() => {
-    return patient.year_of_birth ?? patient.date_of_birth?.split("-")[0];
+    return (
+      patient.year_of_birth?.toString() ?? patient.date_of_birth?.split("-")[0]
+    );
   }, [patient]);
 
   return (
