@@ -9,6 +9,7 @@ import {
 import { FC, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { I18NNAMESPACE } from "@/lib/constants";
 import { Input } from "@/components/ui/input";
 import { Patient } from "@/types/patient";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -16,6 +17,7 @@ import { apis } from "@/apis";
 import { useNavigate } from "@tanstack/react-router";
 import { useDebouncedState } from "@/hooks/useDebouncedState";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 
 type TokenSearchDialogProps = {
   facilityId: string;
@@ -26,6 +28,7 @@ const TokenSearchDialog: FC<TokenSearchDialogProps> = ({
   trigger,
   facilityId,
 }) => {
+  const { t } = useTranslation(I18NNAMESPACE);
   const [open, setOpen] = useState(false);
   const [token, setToken] = useState<number | undefined>();
   const debouncedToken = useDebouncedState(token, 300);
@@ -56,14 +59,13 @@ const TokenSearchDialog: FC<TokenSearchDialogProps> = ({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        {trigger ?? <Button>Search by Token</Button>}
+        {trigger ?? <Button>{t("search_by_token")}</Button>}
       </DialogTrigger>
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>Find Patient by Token</DialogTitle>
+          <DialogTitle>{t("find_patient_by_token")}</DialogTitle>
           <DialogDescription>
-            Enter the scan and share token number to fetch and preview the
-            patient.
+            {t("find_patient_by_token_description")}
           </DialogDescription>
         </DialogHeader>
 
@@ -77,7 +79,7 @@ const TokenSearchDialog: FC<TokenSearchDialogProps> = ({
             pattern="[0-9]*"
             maxLength={6}
             placeholder="#"
-            aria-label="Token number"
+            aria-label={t("token_number")}
             className="h-24 border-none px-0 text-center leading-none tracking-widest shadow-none focus-visible:ring-0 md:h-24"
             style={{ fontSize: "4rem" }}
             autoFocus
@@ -98,7 +100,8 @@ const TokenSearchDialog: FC<TokenSearchDialogProps> = ({
 
             {!isFetching && isEnabled && isError && (
               <p className="text-center text-sm text-destructive">
-                {(error as { message?: string })?.message || "No patient found"}
+                {(error as { message?: string })?.message ||
+                  t("no_patient_found")}
               </p>
             )}
 

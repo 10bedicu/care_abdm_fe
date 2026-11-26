@@ -10,7 +10,9 @@ import {
   useFormContext,
   useFormState,
 } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 
+import { I18NNAMESPACE } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 import { Label } from "@/components/ui/label";
@@ -142,8 +144,15 @@ function FormDescription({ className, ...props }: React.ComponentProps<"p">) {
 }
 
 function FormMessage({ className, ...props }: React.ComponentProps<"p">) {
+  const { t, i18n } = useTranslation(I18NNAMESPACE);
   const { error, formMessageId } = useFormField();
-  const body = error ? String(error?.message ?? "") : props.children;
+  const message = String(error?.message ?? "");
+  // schema messages are translation keys; others, like the server's, show as they are
+  const body = error
+    ? i18n.exists(message, { ns: I18NNAMESPACE })
+      ? t(message)
+      : message
+    : props.children;
 
   if (!body) {
     return null;

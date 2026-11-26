@@ -30,6 +30,7 @@ type FormMemory = {
 };
 
 export const ShowAbhaProfile: FC<ShowAbhaProfileProps> = ({ abhaNumber }) => {
+  const { t } = useTranslation(I18NNAMESPACE);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const { currentStep } = useMultiStepForm<FormMemory>(
@@ -50,15 +51,14 @@ export const ShowAbhaProfile: FC<ShowAbhaProfileProps> = ({ abhaNumber }) => {
         <DrawerTrigger asChild>
           <Button type="button" variant="outline">
             <IdCardIcon />
-            Show ABHA Profile
+            {t("show_abha_profile")}
           </Button>
         </DrawerTrigger>
         <DrawerContent size="md">
           <DrawerHeader showCloseButton className="px-4">
-            <DrawerTitle>Abha Profile</DrawerTitle>
+            <DrawerTitle>{t("abha_profile")}</DrawerTitle>
             <DrawerDescription>
-              View and manage your ABHA profile details for better healthcare
-              access.
+              {t("abha_profile_description")}
             </DrawerDescription>
           </DrawerHeader>
           <DrawerBody>{currentStep}</DrawerBody>
@@ -154,7 +154,7 @@ export const AbhaProfile: FC<AbhaProfileProps> = ({ memory, onSuccess }) => {
           <div className="grid gap-4 sm:grid-cols-[auto_1fr]">
             <img
               src={`data:image/png;base64,${abha.profile_photo}`}
-              alt={`${abha.name}'s photo`}
+              alt={t("abha_profile_photo_alt", { name: abha.name })}
               className="h-60 w-48 rounded-lg border border-border object-cover"
             />
             <div className="flex flex-col gap-4">{identity}</div>
@@ -201,7 +201,7 @@ export const AbhaProfile: FC<AbhaProfileProps> = ({ memory, onSuccess }) => {
             className="w-full"
             onClick={() => {
               if (!memory?.abhaNumber) {
-                toast.error("No ABHA number found");
+                toast.error(t("no_abha_number_found"));
                 return;
               }
               onSuccess(memory.abhaNumber);

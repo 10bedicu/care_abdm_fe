@@ -2,11 +2,13 @@ import { AbdmScope } from "@/components/AbdmScope";
 import { Button } from "@/components/ui/button";
 import { FC } from "react";
 import { HashIcon } from "lucide-react";
+import { I18NNAMESPACE } from "@/lib/constants";
 import TokenSearchDialog from "@/components/TokenSearchDialog";
 import { WithMeta } from "@/types/meta";
 import { apis } from "@/apis";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 
 type PatientSearchActionsProps = {
   facilityId: string;
@@ -17,6 +19,7 @@ const PatientSearchActions: FC<WithMeta<PatientSearchActionsProps>> = ({
   facilityId,
   className,
 }) => {
+  const { t } = useTranslation(I18NNAMESPACE);
   const { data: healthFacility } = useQuery({
     queryKey: ["healthFacility", facilityId],
     queryFn: () => apis.healthFacility.get(facilityId),
@@ -39,7 +42,7 @@ const PatientSearchActions: FC<WithMeta<PatientSearchActionsProps>> = ({
               className={cn("gap-3", className)}
             >
               <HashIcon />
-              Find Patient by Abha Token
+              {t("find_patient_by_abha_token")}
             </Button>
           }
         />

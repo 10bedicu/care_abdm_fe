@@ -83,7 +83,7 @@ export const LinkAbhaNumber: FC<LinkAbhaNumberProps> = ({
   });
 
   const isDisabled = !facilityId || !healthFacility;
-  const title = label ?? "Generate/Link ABHA Number";
+  const title = label ?? t("generate_link_abha_number");
 
   const trigger = (
     <Button
@@ -115,7 +115,7 @@ export const LinkAbhaNumber: FC<LinkAbhaNumberProps> = ({
             </TooltipTrigger>
             <TooltipContent>
               {facilityId
-                ? "Abha linking is disabled for this facility as it doesn't have health facility id configured."
+                ? t("abha_disabled_due_to_no_health_facility")
                 : t("abha_disabled_due_to_no_facility")}
             </TooltipContent>
           </Tooltip>
@@ -147,15 +147,14 @@ export const LinkAbhaNumber: FC<LinkAbhaNumberProps> = ({
               <div className="min-w-0">
                 <DrawerTitle>{title}</DrawerTitle>
                 <DrawerDescription>
-                  Generate/link patient's ABHA details for easy access to
-                  healthcare services.
+                  {t("link_abha_number_description")}
                 </DrawerDescription>
               </div>
               {backUrl ? (
                 <Button asChild variant="outline" className="max-sm:w-full">
                   <Link to={backUrl}>
                     <ChevronLeftIcon />
-                    Go back
+                    {t("go_back")}
                   </Link>
                 </Button>
               ) : (

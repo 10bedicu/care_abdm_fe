@@ -192,16 +192,15 @@ const PatientRegistrationForm: FC<WithMeta<PatientRegistrationFormProps>> = ({
         className="flex flex-col gap-4 rounded-md bg-card p-6 text-card-foreground shadow"
       >
         <div>
-          <h5 className="text-lg font-semibold">ABHA Info</h5>
+          <h5 className="text-lg font-semibold">{t("abha_info")}</h5>
           <p className="text-sm text-muted-foreground">
-            ABHA ID is part of an ABDM's initiative to enhance patient care and
-            improve patient outcomes.
+            {t("abha_info_description")}
           </p>
         </div>
 
         <div className="flex flex-col gap-6 px-1">
           <Field>
-            <FieldLabel htmlFor="abha-info-number">ABHA Number</FieldLabel>
+            <FieldLabel htmlFor="abha-info-number">{t("abha_number")}</FieldLabel>
             <Input
               id="abha-info-number"
               value={abhaNumber?.abha_number || form.watch("abha_number") || ""}
@@ -210,7 +209,7 @@ const PatientRegistrationForm: FC<WithMeta<PatientRegistrationFormProps>> = ({
           </Field>
 
           <Field>
-            <FieldLabel htmlFor="abha-info-address">ABHA Address</FieldLabel>
+            <FieldLabel htmlFor="abha-info-address">{t("abha_address")}</FieldLabel>
             <Input
               id="abha-info-address"
               value={abhaNumber?.abha_address || form.watch("abha_address") || ""}

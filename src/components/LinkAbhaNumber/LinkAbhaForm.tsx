@@ -219,7 +219,7 @@ type EnterIdentifierProps = InjectedStepProps<FormMemory>;
 
 const enterIdentifierFormSchema = z
   .object({
-    id: z.string().min(4, { message: "Enter a valid ID" }),
+    id: z.string().min(4, { message: "validation__enter_valid_id" }),
     name: z.string().optional(),
     disclaimer_1: z.boolean(),
     disclaimer_2: z.boolean(),
@@ -238,7 +238,7 @@ const enterIdentifierFormSchema = z
         ctx.addIssue({
           path: ["id"],
           code: z.ZodIssueCode.custom,
-          message: "Aadhaar number must be 12 or 16 digits",
+          message: "validation__aadhaar_number_length",
         });
       }
 
@@ -246,7 +246,7 @@ const enterIdentifierFormSchema = z
         ctx.addIssue({
           path: ["name"],
           code: z.ZodIssueCode.custom,
-          message: "Name is required",
+          message: "validation__name_required",
         });
       }
 
@@ -256,7 +256,7 @@ const enterIdentifierFormSchema = z
           ctx.addIssue({
             path: [key],
             code: z.ZodIssueCode.custom,
-            message: "Please read and accept this policy",
+            message: "validation__accept_policy",
           });
         }
       }
@@ -267,7 +267,7 @@ const enterIdentifierFormSchema = z
           ctx.addIssue({
             path: [key],
             code: z.ZodIssueCode.custom,
-            message: "Please read and accept this policy",
+            message: "validation__accept_policy",
           });
         }
       }
@@ -438,7 +438,7 @@ const EnterIdentifier: FC<EnterIdentifierProps> = ({ setMemory, goTo }) => {
               </FormControl>
               <FormDescription>
                 {isCreateFlow
-                  ? "Aadhaar number will not be stored by CARE."
+                  ? t("aadhaar_number_not_stored")
                   : t("any_id_description")}
               </FormDescription>
               <FormMessage />
@@ -477,7 +477,7 @@ const EnterIdentifier: FC<EnterIdentifierProps> = ({ setMemory, goTo }) => {
                                 <FormControl>
                                   <Input
                                     {...nameField}
-                                    placeholder="Enter Beneficiary Name"
+                                    placeholder={t("enter_beneficiary_name")}
                                   />
                                 </FormControl>
                                 <FormMessage />
@@ -505,7 +505,7 @@ const EnterIdentifier: FC<EnterIdentifierProps> = ({ setMemory, goTo }) => {
               handleCheckAllDisclaimers();
             }}
           >
-            Check all terms
+            {t("check_all_terms")}
           </Button>
         </div>
 
@@ -651,10 +651,10 @@ type VerifyIdProps = InjectedStepProps<FormMemory> & {
 const verifyIdFormSchema = z.object({
   _id: z.string(),
   otp: z.string().length(6, {
-    message: "OTP must be 6 digits",
+    message: "validation__otp_length",
   }),
   _resendOtpCount: z.number().max(MAX_OTP_RESEND_COUNT, {
-    message: "You can only resend OTP 3 times",
+    message: "validation__otp_resend_limit",
   }),
 });
 
@@ -778,7 +778,7 @@ const VerifyId: FC<VerifyIdProps> = ({
           name="otp"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>One-Time Password</FormLabel>
+              <FormLabel>{t("one_time_password")}</FormLabel>
               <FormControl>
                 <OtpInput autoFocus {...field} />
               </FormControl>
@@ -916,13 +916,13 @@ type VerifyAadhaarWithOtpProps = InjectedStepProps<FormMemory>;
 const verifyAadhaarWithOtpFormSchema = z.object({
   _aadhaar: z.string(),
   otp: z.string().length(6, {
-    message: "OTP must be 6 digits",
+    message: "validation__otp_length",
   }),
   mobile: z.string().length(10, {
-    message: "Mobile number must be 10 digits",
+    message: "validation__mobile_number_length",
   }),
   _resendOtpCount: z.number().max(MAX_OTP_RESEND_COUNT, {
-    message: "You can only resend OTP 3 times",
+    message: "validation__otp_resend_limit",
   }),
 });
 
@@ -1010,15 +1010,15 @@ const VerifyAadhaarWithOtp: FC<VerifyAadhaarWithOtpProps> = ({
           name="_aadhaar"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Aadhaar Number / Virtual ID</FormLabel>
+              <FormLabel>{t("aadhaar_number_or_virtual_id")}</FormLabel>
               <FormControl>
                 <Input
-                  placeholder="Enter 12 digital Aadhaar  number OR 16 digit virtual ID"
+                  placeholder={t("enter_aadhaar_number_or_virtual_id")}
                   {...field}
                 />
               </FormControl>
               <FormDescription>
-                Aadhaar number will not be stored by CARE.
+                {t("aadhaar_number_not_stored")}
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -1030,7 +1030,7 @@ const VerifyAadhaarWithOtp: FC<VerifyAadhaarWithOtpProps> = ({
           name="otp"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>One-Time Password</FormLabel>
+              <FormLabel>{t("one_time_password")}</FormLabel>
               <FormControl>
                 <OtpInput autoFocus {...field} />
               </FormControl>
@@ -1044,13 +1044,12 @@ const VerifyAadhaarWithOtp: FC<VerifyAadhaarWithOtpProps> = ({
           name="mobile"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Mobile Number</FormLabel>
+              <FormLabel>{t("mobile_number")}</FormLabel>
               <FormControl>
-                <Input placeholder="Enter 10 digit mobile number" {...field} />
+                <Input placeholder={t("enter_mobile_number")} {...field} />
               </FormControl>
               <FormDescription>
-                If the given mobile number is not linked with Aadhaar, we'll
-                send you an OTP to verify.
+                {t("mobile_number_not_linked_with_aadhaar")}
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -1104,13 +1103,13 @@ const verifyAadhaarWithDemographicsFormSchema = z.object({
   pin_code: z
     .string()
     .length(6, {
-      message: "Pin code must be 6 digits",
+      message: "validation__pincode_length",
     })
     .optional(),
   mobile: z
     .string()
     .length(10, {
-      message: "Mobile number must be 10 digits",
+      message: "validation__mobile_number_length",
     })
     .optional(),
   profile_photo: z.string().optional(),
@@ -1217,15 +1216,15 @@ const VerifyAadhaarWithDemographics: FC<VerifyAadhaarWithDemographicsProps> = ({
           name="_aadhaar"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Aadhaar Number / Virtual ID</FormLabel>
+              <FormLabel>{t("aadhaar_number_or_virtual_id")}</FormLabel>
               <FormControl>
                 <Input
-                  placeholder="Enter 12 digital Aadhaar  number OR 16 digit virtual ID"
+                  placeholder={t("enter_aadhaar_number_or_virtual_id")}
                   {...field}
                 />
               </FormControl>
               <FormDescription>
-                Aadhaar number will not be stored by CARE.
+                {t("aadhaar_number_not_stored")}
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -1238,15 +1237,15 @@ const VerifyAadhaarWithDemographics: FC<VerifyAadhaarWithDemographicsProps> = ({
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel aria-required>Name</FormLabel>
+                <FormLabel aria-required>{t("name")}</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="Enter your name as per Aadhaar"
+                    placeholder={t("enter_name_as_per_aadhaar")}
                     {...field}
                   />
                 </FormControl>
                 <FormDescription>
-                  Name must exactly match with the name in Aadhaar.
+                  {t("name_must_match_aadhaar")}
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -1258,21 +1257,21 @@ const VerifyAadhaarWithDemographics: FC<VerifyAadhaarWithDemographicsProps> = ({
             name="gender"
             render={({ field }) => (
               <FormItem>
-                <FormLabel aria-required>Gender</FormLabel>
+                <FormLabel aria-required>{t("gender")}</FormLabel>
                 <Select
                   onValueChange={field.onChange}
                   defaultValue={field.value}
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Gender" />
+                      <SelectValue placeholder={t("gender")} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
                     {[
-                      { id: "M", label: "Male" },
-                      { id: "F", label: "Female" },
-                      { id: "O", label: "Other" },
+                      { id: "M", label: t("male") },
+                      { id: "F", label: t("female") },
+                      { id: "O", label: t("other") },
                     ].map((gender) => (
                       <SelectItem key={gender.id} value={gender.id}>
                         {gender.label}
@@ -1290,7 +1289,7 @@ const VerifyAadhaarWithDemographics: FC<VerifyAadhaarWithDemographicsProps> = ({
             name="date_of_birth"
             render={({ field }) => (
               <FormItem>
-                <FormLabel aria-required>Date of Birth</FormLabel>
+                <FormLabel aria-required>{t("date_of_birth")}</FormLabel>
                 <FormControl>
                   <Input type="date" {...field} />
                 </FormControl>
@@ -1304,14 +1303,14 @@ const VerifyAadhaarWithDemographics: FC<VerifyAadhaarWithDemographicsProps> = ({
             name="state_code"
             render={({ field }) => (
               <FormItem>
-                <FormLabel aria-required>State</FormLabel>
+                <FormLabel aria-required>{t("state")}</FormLabel>
                 <Select
                   onValueChange={(value) => field.onChange(Number(value))}
                   defaultValue={field.value?.toString()}
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select a state" />
+                      <SelectValue placeholder={t("select_a_state")} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -1335,14 +1334,14 @@ const VerifyAadhaarWithDemographics: FC<VerifyAadhaarWithDemographicsProps> = ({
             name="district_code"
             render={({ field }) => (
               <FormItem>
-                <FormLabel aria-required>District</FormLabel>
+                <FormLabel aria-required>{t("district")}</FormLabel>
                 <Select
                   onValueChange={(value) => field.onChange(Number(value))}
                   defaultValue={field.value?.toString()}
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select a district" />
+                      <SelectValue placeholder={t("select_a_district")} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -1366,9 +1365,9 @@ const VerifyAadhaarWithDemographics: FC<VerifyAadhaarWithDemographicsProps> = ({
             name="pin_code"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Pin Code</FormLabel>
+                <FormLabel>{t("pincode")}</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter 6 digit pin code" {...field} />
+                  <Input placeholder={t("enter_pincode")} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -1380,10 +1379,10 @@ const VerifyAadhaarWithDemographics: FC<VerifyAadhaarWithDemographicsProps> = ({
             name="address"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Address</FormLabel>
+                <FormLabel>{t("address")}</FormLabel>
                 <FormControl>
                   <Textarea
-                    placeholder="Enter address as per aadhaar card"
+                    placeholder={t("enter_address_as_per_aadhaar")}
                     {...field}
                   />
                 </FormControl>
@@ -1397,10 +1396,10 @@ const VerifyAadhaarWithDemographics: FC<VerifyAadhaarWithDemographicsProps> = ({
             name="mobile"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Mobile Number</FormLabel>
+                <FormLabel>{t("mobile_number")}</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="Enter 10 digit mobile number"
+                    placeholder={t("enter_mobile_number")}
                     {...field}
                   />
                 </FormControl>
@@ -1428,7 +1427,7 @@ type VerifyAadhaarWithFaceProps = InjectedStepProps<FormMemory>;
 const verifyAadhaarWithFaceFormSchema = z.object({
   _aadhaar: z.string(),
   mobile: z.string().length(10, {
-    message: "Mobile number must be 10 digits",
+    message: "validation__mobile_number_length",
   }),
 });
 
@@ -1569,15 +1568,15 @@ const VerifyAadhaarWithFace: FC<VerifyAadhaarWithFaceProps> = ({
           name="_aadhaar"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Aadhaar Number / Virtual ID</FormLabel>
+              <FormLabel>{t("aadhaar_number_or_virtual_id")}</FormLabel>
               <FormControl>
                 <Input
-                  placeholder="Enter 12 digital Aadhaar  number OR 16 digit virtual ID"
+                  placeholder={t("enter_aadhaar_number_or_virtual_id")}
                   {...field}
                 />
               </FormControl>
               <FormDescription>
-                Aadhaar number will not be stored by CARE.
+                {t("aadhaar_number_not_stored")}
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -1590,13 +1589,12 @@ const VerifyAadhaarWithFace: FC<VerifyAadhaarWithFaceProps> = ({
           disabled={!authInitViaFaceMutation.isIdle}
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Mobile Number</FormLabel>
+              <FormLabel>{t("mobile_number")}</FormLabel>
               <FormControl>
-                <Input placeholder="Enter 10 digit mobile number" {...field} />
+                <Input placeholder={t("enter_mobile_number")} {...field} />
               </FormControl>
               <FormDescription>
-                If the given mobile number is not linked with Aadhaar, we'll
-                send you an OTP to verify.
+                {t("mobile_number_not_linked_with_aadhaar")}
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -1647,10 +1645,10 @@ type VerifyAadhaarWithBioProps = InjectedStepProps<FormMemory>;
 const verifyAadhaarWithBioFormSchema = z.object({
   _aadhaar: z.string(),
   fingerprint_pid: z.string().min(1, {
-    message: "Fingerprint PID is required",
+    message: "validation__fingerprint_required",
   }),
   mobile: z.string().length(10, {
-    message: "Mobile number must be 10 digits",
+    message: "validation__mobile_number_length",
   }),
 });
 
@@ -1710,7 +1708,7 @@ const VerifyAadhaarWithBio: FC<VerifyAadhaarWithBioProps> = ({
 
       if (errorCode !== "0") {
         const errorMessage =
-          respElement.getAttribute("errInfo") ?? "Fingerprint capture failed";
+          respElement.getAttribute("errInfo") ?? t("fingerprint_capture_failed");
         toast.error(errorMessage);
         form.setError("fingerprint_pid", { message: errorMessage });
         return;
@@ -1777,15 +1775,15 @@ const VerifyAadhaarWithBio: FC<VerifyAadhaarWithBioProps> = ({
           name="_aadhaar"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Aadhaar Number / Virtual ID</FormLabel>
+              <FormLabel>{t("aadhaar_number_or_virtual_id")}</FormLabel>
               <FormControl>
                 <Input
-                  placeholder="Enter 12 digital Aadhaar  number OR 16 digit virtual ID"
+                  placeholder={t("enter_aadhaar_number_or_virtual_id")}
                   {...field}
                 />
               </FormControl>
               <FormDescription>
-                Aadhaar number will not be stored by CARE.
+                {t("aadhaar_number_not_stored")}
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -1797,7 +1795,7 @@ const VerifyAadhaarWithBio: FC<VerifyAadhaarWithBioProps> = ({
           name="fingerprint_pid"
           render={() => (
             <FormItem>
-              <FormLabel>Fingerprint</FormLabel>
+              <FormLabel>{t("fingerprint")}</FormLabel>
               <FormControl>
                 <div className="flex flex-col gap-2">
                   <div className="flex flex-col items-center justify-center gap-4 rounded-lg border border-dashed border-strong-border bg-muted-background p-8">
@@ -1888,13 +1886,12 @@ const VerifyAadhaarWithBio: FC<VerifyAadhaarWithBioProps> = ({
           name="mobile"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Mobile Number</FormLabel>
+              <FormLabel>{t("mobile_number")}</FormLabel>
               <FormControl>
-                <Input placeholder="Enter 10 digit mobile number" {...field} />
+                <Input placeholder={t("enter_mobile_number")} {...field} />
               </FormControl>
               <FormDescription>
-                If the given mobile number is not linked with Aadhaar, we'll
-                send you an OTP to verify.
+                {t("mobile_number_not_linked_with_aadhaar")}
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -1949,7 +1946,7 @@ const HandleExistingAbha: FC<HandleExistingAbhaProps> = ({ memory, goTo }) => {
           className="w-full"
           onClick={() => {
             if (!memory?.abhaNumber) {
-              toast.error("No ABHA number found");
+              toast.error(t("no_abha_number_found"));
               return;
             }
             goTo("show-abha-profile");
@@ -2033,9 +2030,9 @@ const LinkMobile: FC<LinkMobileProps> = ({ memory, setMemory, goTo }) => {
           disabled
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Mobile Number</FormLabel>
+              <FormLabel>{t("mobile_number")}</FormLabel>
               <FormControl>
-                <Input placeholder="Enter 10 digit mobile number" {...field} />
+                <Input placeholder={t("enter_mobile_number")} {...field} />
               </FormControl>
               <FormDescription>
                 {t("mobile_number_different_from_aadhaar_mobile_number")}
@@ -2063,10 +2060,10 @@ type VerifyMobileProps = InjectedStepProps<FormMemory>;
 const verifyMobileFormSchema = z.object({
   _mobile: z.string(),
   otp: z.string().length(6, {
-    message: "OTP must be 6 digits",
+    message: "validation__otp_length",
   }),
   _resendOtpCount: z.number().max(MAX_OTP_RESEND_COUNT, {
-    message: "You can only resend OTP 3 times",
+    message: "validation__otp_resend_limit",
   }),
 });
 
@@ -2142,9 +2139,9 @@ const VerifyMobile: FC<VerifyMobileProps> = ({ memory, setMemory, goTo }) => {
           disabled
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Mobile Number</FormLabel>
+              <FormLabel>{t("mobile_number")}</FormLabel>
               <FormControl>
-                <Input placeholder="Enter 10 digit mobile number" {...field} />
+                <Input placeholder={t("enter_mobile_number")} {...field} />
               </FormControl>
               <FormDescription>
                 {t("mobile_number_different_from_aadhaar_mobile_number")}
@@ -2159,7 +2156,7 @@ const VerifyMobile: FC<VerifyMobileProps> = ({ memory, setMemory, goTo }) => {
           name="otp"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>One-Time Password</FormLabel>
+              <FormLabel>{t("one_time_password")}</FormLabel>
               <FormControl>
                 <OtpInput autoFocus {...field} />
               </FormControl>
@@ -2240,7 +2237,7 @@ type ChooseAbhaAddressProps = InjectedStepProps<FormMemory>;
 
 const chooseAbhaAddressFormSchema = z.object({
   abhaAddress: z.string().regex(/^(?![\d.])[a-zA-Z0-9._]{4,}(?<!\.)$/, {
-    message: "Invalid ABHA Address",
+    message: "validation__invalid_abha_address",
   }),
 });
 
@@ -2330,10 +2327,10 @@ const ChooseAbhaAddress: FC<ChooseAbhaAddressProps> = ({
           name="abhaAddress"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>ABHA Address</FormLabel>
+              <FormLabel>{t("abha_address")}</FormLabel>
               <FormControl>
                 <Input
-                  placeholder="Enter ABHA Address of your choice"
+                  placeholder={t("enter_abha_address_of_choice")}
                   {...field}
                 />
               </FormControl>

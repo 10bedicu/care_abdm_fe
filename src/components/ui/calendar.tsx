@@ -2,6 +2,7 @@
 import { differenceInCalendarDays } from "date-fns";
 import { ChevronDownIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import * as React from "react";
+import { useTranslation } from "react-i18next";
 import {
   DateRange,
   DayPicker,
@@ -11,6 +12,7 @@ import {
   useDayPicker,
 } from "react-day-picker";
 
+import { I18NNAMESPACE } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -306,7 +308,9 @@ function Nav({
   onPrevClick?: (date: Date) => void;
   onNextClick?: (date: Date) => void;
 }) {
+  const { t } = useTranslation(I18NNAMESPACE);
   const { nextMonth, previousMonth, goToMonth } = useDayPicker();
+  const yearsPerPage = displayYears.to - displayYears.from + 1;
 
   const isPreviousDisabled = (() => {
     if (navView === "years") {
@@ -393,9 +397,7 @@ function Nav({
         disabled={isPreviousDisabled}
         aria-label={
           navView === "years"
-            ? `Go to the previous ${
-                displayYears.to - displayYears.from + 1
-              } years`
+            ? t("go_to_previous_years", { years: yearsPerPage })
             : labelPrevious(previousMonth)
         }
         onClick={handlePreviousClick}
@@ -411,7 +413,7 @@ function Nav({
         disabled={isNextDisabled}
         aria-label={
           navView === "years"
-            ? `Go to the next ${displayYears.to - displayYears.from + 1} years`
+            ? t("go_to_next_years", { years: yearsPerPage })
             : labelNext(nextMonth)
         }
         onClick={handleNextClick}
