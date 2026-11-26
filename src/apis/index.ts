@@ -393,7 +393,11 @@ export const apis = {
       });
     },
 
-    getAbhaCard: async (query: { abha_id?: string; type: "pdf" | "png" }) => {
+    getAbhaCard: async (query: {
+      abha_id?: string;
+      facility?: string;
+      type: "pdf" | "png";
+    }) => {
       return await request<Blob>(
         "/api/abdm/v3/health_id/abha_card/" + queryString(query)
       );

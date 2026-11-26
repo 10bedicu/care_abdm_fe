@@ -23,13 +23,17 @@ import { useTranslation } from "react-i18next";
 
 type ShowAbhaProfileProps = {
   abhaNumber: AbhaNumber;
+  facilityId?: string;
 };
 
 type FormMemory = {
   abhaNumber: AbhaNumber;
 };
 
-export const ShowAbhaProfile: FC<ShowAbhaProfileProps> = ({ abhaNumber }) => {
+export const ShowAbhaProfile: FC<ShowAbhaProfileProps> = ({
+  abhaNumber,
+  facilityId,
+}) => {
   const { t } = useTranslation(I18NNAMESPACE);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
@@ -37,7 +41,7 @@ export const ShowAbhaProfile: FC<ShowAbhaProfileProps> = ({ abhaNumber }) => {
     [
       {
         id: "show-abha-profile",
-        element: <AbhaProfile {...({} as AbhaProfileProps)} />,
+        element: <AbhaProfile {...({ facilityId } as AbhaProfileProps)} />,
       },
     ],
     {
@@ -79,16 +83,22 @@ const Detail = ({ label, children }: { label: string; children: ReactNode }) => 
 );
 
 export type AbhaProfileProps = InjectedStepProps<FormMemory> & {
+  facilityId?: string;
   onSuccess?: (abhaNumber: AbhaNumber) => void;
 };
 
-export const AbhaProfile: FC<AbhaProfileProps> = ({ memory, onSuccess }) => {
+export const AbhaProfile: FC<AbhaProfileProps> = ({
+  memory,
+  facilityId,
+  onSuccess,
+}) => {
   const { t } = useTranslation(I18NNAMESPACE);
 
   const { mutate: downloadAbhaCard } = useMutation({
     mutationFn: (type: "pdf" | "png") => {
       return apis.healthId.getAbhaCard({
         abha_id: memory?.abhaNumber.abha_number,
+        facility: facilityId,
         type,
       });
     },

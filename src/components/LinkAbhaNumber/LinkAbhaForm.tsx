@@ -137,6 +137,7 @@ const getIdType = (id: string): IdType => {
 };
 
 export const LinkAbhaForm: FC<LinkAbhaFormProps> = ({ onSuccess }) => {
+  const { facilityId } = useLinkAbhaNumberContext();
   const { currentStep } = useMultiStepForm<FormMemory>(
     [
       {
@@ -197,7 +198,9 @@ export const LinkAbhaForm: FC<LinkAbhaFormProps> = ({ onSuccess }) => {
       },
       {
         id: "show-abha-profile",
-        element: <AbhaProfile {...({ onSuccess } as AbhaProfileProps)} />,
+        element: (
+          <AbhaProfile {...({ onSuccess, facilityId } as AbhaProfileProps)} />
+        ),
       },
     ],
     {

@@ -219,7 +219,10 @@ const PatientRegistrationForm: FC<WithMeta<PatientRegistrationFormProps>> = ({
 
           {abhaProfile && (
             <div>
-              <ShowAbhaProfile abhaNumber={abhaProfile} />
+              <ShowAbhaProfile
+                abhaNumber={abhaProfile}
+                facilityId={facilityId}
+              />
             </div>
           )}
         </div>

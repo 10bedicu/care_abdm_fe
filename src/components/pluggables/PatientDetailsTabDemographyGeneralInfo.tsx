@@ -27,13 +27,14 @@ const PatientDetailsTabDemographyGeneralInfo: FC<
     // The host passes an empty string outside a facility.
     queryKey: ["abhaNumber", patientId, facilityId || undefined],
     queryFn: () => apis.abhaNumber.get(patientId, { facility: facilityId }),
-    enabled: !!patientId,
+    enabled: !!patientId && !!facilityId,
   });
 
   const { mutate: downloadAbhaCard } = useMutation({
     mutationFn: (type: "pdf" | "png") => {
       return apis.healthId.getAbhaCard({
         abha_id: abhaNumber?.abha_number,
+        facility: facilityId,
         type,
       });
     },
