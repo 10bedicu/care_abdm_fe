@@ -14,6 +14,43 @@ export class APIError extends Error {
   }
 }
 
+// DRF answers with { detail }, a list of messages, or { field: [messages] }
+const readableMessage = (data: unknown): string => {
+  if (typeof data === "string") {
+    return data;
+  }
+
+  if (Array.isArray(data)) {
+    return data.map(readableMessage).filter(Boolean).join(" ");
+  }
+
+  if (!data || typeof data !== "object") {
+    return "";
+  }
+
+  const { detail, message, non_field_errors, ...fields } = data as Record<
+    string,
+    unknown
+  >;
+
+  return (
+    readableMessage(detail) ||
+    readableMessage(message) ||
+    readableMessage(non_field_errors) ||
+    Object.entries(fields)
+      .map(([field, value]) => {
+        const fieldMessage = readableMessage(value);
+        return fieldMessage && `${field}: ${fieldMessage}`;
+      })
+      .filter(Boolean)
+      .join(" ")
+  );
+};
+
+/** The server's message for a failed request, else ``fallback``. */
+export const errorMessage = (error: unknown, fallback: string) =>
+  error instanceof APIError && error.message ? error.message : fallback;
+
 export async function request<Response>(
   path: string,
   options?: RequestInit
@@ -35,13 +72,16 @@ export async function request<Response>(
     },
   };
 
-  const response = await fetch(url, requestInit);
+  // the host toasts every error but an APIError, so a network failure is one too
+  const response = await fetch(url, requestInit).catch((error) => {
+    throw new APIError("", error, 0);
+  });
 
   let data = null;
-  const contentType = response.headers.get("Content-Type");
-  if (contentType === "application/json") {
-    data = await response.json();
-  } else if (contentType === "image/png") {
+  const contentType = response.headers.get("Content-Type") ?? "";
+  if (contentType.includes("application/json")) {
+    data = await response.json().catch(() => null);
+  } else if (contentType.includes("image/png")) {
     data = await response.blob();
   }
 
@@ -50,11 +90,7 @@ export async function request<Response>(
       // TODO: implement refresh token logic
     }
 
-    throw new APIError(
-      (data.detail ?? JSON.stringify(data)) || "Something went wrong",
-      data,
-      response.status
-    );
+    throw new APIError(readableMessage(data), data, response.status);
   }
 
   return data as Response;

@@ -6,6 +6,7 @@ import { LinkAbhaNumber } from "@/components/LinkAbhaNumber";
 import { Patient } from "@/types/patient";
 import { WithMeta } from "@/types/meta";
 import { apis } from "@/apis";
+import { errorMessage } from "@/apis/request";
 import { toast } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 
@@ -38,7 +39,7 @@ const PatientHomeActions: FC<WithMeta<PatientHomeActionsProps>> = ({
       }
     },
     onError: (error) => {
-      toast.error(error.message || t("error_linking_abha_number"));
+      toast.error(errorMessage(error, t("error_linking_abha_number")));
     },
   });
 

@@ -27,6 +27,7 @@ import { I18NNAMESPACE } from "@/lib/constants";
 import { Input } from "@/components/ui/input";
 import { Meta } from "@/types/meta";
 import { apis } from "@/apis";
+import { errorMessage } from "@/apis/request";
 import { toast } from "@/lib/utils";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -72,7 +73,7 @@ export const ConfigureHealthFacilityForm: FC<ConfigureHealthFacilityFormProps> =
   });
 
   const handleError = (error: Error) => {
-    toast.error(error?.message || t("health_facility__config_update_error"));
+    toast.error(errorMessage(error, t("health_facility__config_update_error")));
   };
 
   const handleUpdate = (data: HealthFacility) => {

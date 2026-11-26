@@ -31,6 +31,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { apis } from "@/apis";
+import { errorMessage } from "@/apis/request";
 import dayjs from "@/lib/dayjs";
 import { toast } from "@/lib/utils";
 import { useForm } from "react-hook-form";
@@ -90,7 +91,7 @@ const CreateConsentRequestForm: FC<CreateConsentRequestFormProps> = ({
       onSuccess?.(data);
     },
     onError: (error) => {
-      toast.error(error.message);
+      toast.error(errorMessage(error, t("error_creating_consent_request")));
     },
   });
 

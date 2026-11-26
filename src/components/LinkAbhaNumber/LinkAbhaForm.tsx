@@ -57,7 +57,9 @@ import { QRCodeSVG } from "qrcode.react";
 import { Textarea } from "@/components/ui/textarea";
 import { apis } from "@/apis";
 import { cn } from "@/lib/utils";
+import { errorMessage } from "@/apis/request";
 import { toast } from "@/lib/utils";
+import { useErrorToast } from "@/hooks/useErrorToast";
 import { useForm } from "react-hook-form";
 import { useLinkAbhaNumberContext } from ".";
 import { z } from "zod";
@@ -330,6 +332,9 @@ const EnterIdentifier: FC<EnterIdentifierProps> = ({ setMemory, goTo }) => {
         goTo("verify-aadhaar-with-otp");
       }
     },
+    onError: (error) => {
+      toast.error(errorMessage(error, t("error_sending_otp")));
+    },
   });
 
   const checkAuthMethodsMutation = useMutation({
@@ -347,6 +352,9 @@ const EnterIdentifier: FC<EnterIdentifierProps> = ({ setMemory, goTo }) => {
         setAuthMethods(methods as (typeof SUPPORTED_AUTH_METHODS)[number][]);
       }
     },
+    onError: (error) => {
+      toast.error(errorMessage(error, t("error_fetching_auth_methods")));
+    },
   });
 
   const sendOtpMutation = useMutation({
@@ -360,6 +368,9 @@ const EnterIdentifier: FC<EnterIdentifierProps> = ({ setMemory, goTo }) => {
         }));
         goTo("verify-id");
       }
+    },
+    onError: (error) => {
+      toast.error(errorMessage(error, t("error_sending_otp")));
     },
   });
 
@@ -377,9 +388,14 @@ const EnterIdentifier: FC<EnterIdentifierProps> = ({ setMemory, goTo }) => {
     } else if (idType === "abha-number") {
       setAuthMethods(["AADHAAR_OTP", "MOBILE_OTP"]);
     } else {
-      await checkAuthMethodsMutation.mutateAsync({
-        abha_address: normalizedId,
-      });
+      try {
+        await checkAuthMethodsMutation.mutateAsync({
+          abha_address: normalizedId,
+        });
+      } catch {
+        // toasted by the mutation
+        return;
+      }
     }
 
     setShowAuthMethods(true);
@@ -670,6 +686,9 @@ const VerifyId: FC<VerifyIdProps> = ({
         onSuccess(data.abha_number);
       }
     },
+    onError: (error) => {
+      toast.error(errorMessage(error, t("error_verifying_abha_account")));
+    },
   });
 
   const verifyOtpMutation = useMutation({
@@ -696,6 +715,9 @@ const VerifyId: FC<VerifyIdProps> = ({
         facility: facilityId,
       });
     },
+    onError: (error) => {
+      toast.error(errorMessage(error, t("error_verifying_otp")));
+    },
   });
 
   const resendOtpMutation = useMutation({
@@ -709,6 +731,9 @@ const VerifyId: FC<VerifyIdProps> = ({
           transactionId: data.transaction_id,
         }));
       }
+    },
+    onError: (error) => {
+      toast.error(errorMessage(error, t("error_resending_otp")));
     },
   });
 
@@ -820,6 +845,9 @@ const ChooseAbhaAccount: FC<ChooseAbhaAccountProps> = ({
         toast.success(t("otp_verified_successfully"));
         onSuccess(data.abha_number);
       }
+    },
+    onError: (error) => {
+      toast.error(errorMessage(error, t("error_verifying_abha_account")));
     },
   });
 
@@ -934,6 +962,9 @@ const VerifyAadhaarWithOtp: FC<VerifyAadhaarWithOtpProps> = ({
         goTo("handle-existing-abha");
       }
     },
+    onError: (error) => {
+      toast.error(errorMessage(error, t("error_verifying_otp")));
+    },
   });
 
   const resendAadhaarOtpMutation = useMutation({
@@ -947,6 +978,9 @@ const VerifyAadhaarWithOtp: FC<VerifyAadhaarWithOtpProps> = ({
           transactionId: data.transaction_id,
         }));
       }
+    },
+    onError: (error) => {
+      toast.error(errorMessage(error, t("error_resending_otp")));
     },
   });
 
@@ -1102,16 +1136,18 @@ const VerifyAadhaarWithDemographics: FC<VerifyAadhaarWithDemographicsProps> = ({
     },
   });
 
-  const { data: states } = useQuery({
+  const { data: states, error: statesError } = useQuery({
     queryKey: ["states"],
     queryFn: () => apis.utility.states(),
   });
+  useErrorToast(statesError, t("error_fetching_states"));
 
-  const { data: districts } = useQuery({
+  const { data: districts, error: districtsError } = useQuery({
     queryKey: ["districts", form.watch("state_code")],
     queryFn: () => apis.utility.districts(form.watch("state_code")),
     enabled: !!form.watch("state_code"),
   });
+  useErrorToast(districtsError, t("error_fetching_districts"));
 
   const verifyAadhaarDemographicsMutation = useMutation({
     mutationFn: apis.healthId.abhaCreateVerifyAadhaarDemographics,
@@ -1138,10 +1174,12 @@ const VerifyAadhaarWithDemographics: FC<VerifyAadhaarWithDemographicsProps> = ({
       }
     },
     onError: (error) => {
-      form.setError("_aadhaar", {
-        message: error.message,
-      });
-      toast.error(error.message || t("error_verifying_aadhaar_demographics"));
+      const message = errorMessage(
+        error,
+        t("error_verifying_aadhaar_demographics"),
+      );
+      form.setError("_aadhaar", { message });
+      toast.error(message);
     },
   });
 
@@ -1437,11 +1475,12 @@ const VerifyAadhaarWithFace: FC<VerifyAadhaarWithFaceProps> = ({
       }
     },
     onError: (error) => {
-      toast.error(error.message || t("error_verifying_aadhaar_face"));
+      const message = errorMessage(error, t("error_verifying_aadhaar_face"));
+      toast.error(message);
       setMemory((prev) => ({
         ...prev,
         transactionId: "",
-        error: error.message,
+        error: message,
       }));
     },
   });
@@ -1475,12 +1514,13 @@ const VerifyAadhaarWithFace: FC<VerifyAadhaarWithFaceProps> = ({
       }
     },
     onError: (error) => {
+      const message = errorMessage(error, t("error_capturing_pid_via_face"));
       setIsPolling(false);
       setMemory((prev) => ({
         ...prev,
-        error: error.message,
+        error: message,
       }));
-      toast.error(error.message || t("error_capturing_pid_via_face"));
+      toast.error(message);
     },
   });
 
@@ -1491,6 +1531,9 @@ const VerifyAadhaarWithFace: FC<VerifyAadhaarWithFaceProps> = ({
         setMemory((prev) => ({ ...prev, transactionId: data.transaction_id }));
         setIsPolling(true);
       }
+    },
+    onError: (error) => {
+      toast.error(errorMessage(error, t("error_initiating_face_auth")));
     },
   });
 
@@ -1651,6 +1694,9 @@ const VerifyAadhaarWithBio: FC<VerifyAadhaarWithBioProps> = ({
         goTo("handle-existing-abha");
       }
     },
+    onError: (error) => {
+      toast.error(errorMessage(error, t("error_verifying_aadhaar_bio")));
+    },
   });
 
   const captureFingerprintMutation = useMutation({
@@ -1672,6 +1718,9 @@ const VerifyAadhaarWithBio: FC<VerifyAadhaarWithBioProps> = ({
 
       form.clearErrors("fingerprint_pid");
       form.setValue("fingerprint_pid", data);
+    },
+    onError: (error) => {
+      toast.error(errorMessage(error, t("error_capturing_fingerprint")));
     },
   });
 
@@ -1955,6 +2004,9 @@ const LinkMobile: FC<LinkMobileProps> = ({ memory, setMemory, goTo }) => {
         goTo("verify-mobile");
       }
     },
+    onError: (error) => {
+      toast.error(errorMessage(error, t("error_sending_otp")));
+    },
   });
 
   function onSubmit(values: LinkMobileFormValues) {
@@ -2044,6 +2096,9 @@ const VerifyMobile: FC<VerifyMobileProps> = ({ memory, setMemory, goTo }) => {
         goTo("choose-abha-address");
       }
     },
+    onError: (error) => {
+      toast.error(errorMessage(error, t("error_verifying_otp")));
+    },
   });
 
   const resendMobileOtpMutation = useMutation({
@@ -2057,6 +2112,9 @@ const VerifyMobile: FC<VerifyMobileProps> = ({ memory, setMemory, goTo }) => {
           transactionId: data.transaction_id,
         }));
       }
+    },
+    onError: (error) => {
+      toast.error(errorMessage(error, t("error_resending_otp")));
     },
   });
 
@@ -2213,6 +2271,11 @@ const ChooseAbhaAddress: FC<ChooseAbhaAddressProps> = ({
         setSuggestions(data.abha_addresses);
       }
     },
+    onError: (error) => {
+      toast.error(
+        errorMessage(error, t("error_fetching_abha_address_suggestions")),
+      );
+    },
   });
 
   useEffect(() => {
@@ -2237,6 +2300,9 @@ const ChooseAbhaAddress: FC<ChooseAbhaAddressProps> = ({
         toast.success(t("abha_address_created_successfully"));
         goTo("show-abha-profile");
       }
+    },
+    onError: (error) => {
+      toast.error(errorMessage(error, t("abha_address_created_error")));
     },
   });
 

@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 
 import { apis } from "@/apis";
-import { APIError } from "@/apis/request";
+import { errorMessage } from "@/apis/request";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,9 +36,6 @@ import {
 } from "@/types/paymentOrder";
 
 export const SCAN_PAY_ORDERS_QUERY_KEY = "scanPayOrders";
-
-const errorMessage = (error: unknown, fallback: string) =>
-  error instanceof APIError && error.message ? error.message : fallback;
 
 export const useScanPayOrderActions = (onChanged?: (order: PaymentOrder) => void) => {
   const { t } = useTranslation(I18NNAMESPACE);

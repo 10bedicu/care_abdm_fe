@@ -16,6 +16,7 @@ import { AbhaNumber } from "@/types/abhaNumber";
 import { Button } from "../ui/button";
 import { I18NNAMESPACE } from "@/lib/constants";
 import { apis } from "@/apis";
+import { errorMessage } from "@/apis/request";
 import { toast } from "@/lib/utils";
 import { useMutation } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -127,6 +128,9 @@ export const AbhaProfile: FC<AbhaProfileProps> = ({ memory, onSuccess }) => {
           URL.revokeObjectURL(imageUrl);
         });
       }
+    },
+    onError: (error) => {
+      toast.error(errorMessage(error, t("error_downloading_abha_card")));
     },
   });
 

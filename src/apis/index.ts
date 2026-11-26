@@ -5,7 +5,7 @@ import {
   ConsentPurpose,
   ConsentRequest,
 } from "@/types/consent";
-import { queryString, request } from "./request";
+import { APIError, queryString, request } from "./request";
 
 import { AbhaLoginAccount, AbhaNumber } from "@/types/abhaNumber";
 import { GovtOrganization } from "@/types/govtOrganization";
@@ -431,6 +431,9 @@ export const apis = {
       const response = await fetch("https://127.0.0.1:11100/rd/capture", {
         method: "CAPTURE",
         body: `<?xml version="1.0"?> <PidOptions ver="1.0"> <Opts env="P" fCount="1" fType="2" format="0" pidVer="2.0" wadh="RZ+k4w9ySTzOibQdDHPzCFqrKScZ74b3EibKYy1WyGw=" timeout="10000" posh="UNKNOWN" /> <CustOpts><Param name="mantrakey" value="B0CZLLZ98Z" /></CustOpts> </PidOptions>`,
+      }).catch((error) => {
+        // the RD service is not reachable; an APIError keeps the host from toasting it too
+        throw new APIError("", error, 0);
       });
 
       return response.text();

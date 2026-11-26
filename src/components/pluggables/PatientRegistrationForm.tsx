@@ -10,6 +10,7 @@ import { ShowAbhaProfile } from "../LinkAbhaNumber/ShowAbhaProfile";
 import { UseFormReturn } from "react-hook-form";
 import { WithMeta } from "@/types/meta";
 import { apis } from "@/apis";
+import { errorMessage } from "@/apis/request";
 import { toast } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 
@@ -56,7 +57,7 @@ const PatientRegistrationForm: FC<WithMeta<PatientRegistrationFormProps>> = ({
       }
     },
     onError: (error) => {
-      toast.error(error.message || t("error_linking_abha_number"));
+      toast.error(errorMessage(error, t("error_linking_abha_number")));
     },
   });
 
@@ -94,6 +95,9 @@ const PatientRegistrationForm: FC<WithMeta<PatientRegistrationFormProps>> = ({
 
       form.setValue("_selected_levels", data.results, setFormValueOpts);
       form.setValue("geo_organization", data.results[0].id, setFormValueOpts);
+    },
+    onError: (error) => {
+      toast.warning(errorMessage(error, t("error_autofilling_district")));
     },
   });
 

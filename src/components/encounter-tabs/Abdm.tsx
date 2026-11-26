@@ -2,7 +2,7 @@ import { ConsentArtefact, ConsentRequest } from "@/types/consent";
 import { ChevronDownIcon, RefreshCcwIcon } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
-import { APIError } from "@/apis/request";
+import { APIError, errorMessage } from "@/apis/request";
 import { AbdmScope } from "@/components/AbdmScope";
 import { CardListSkeleton } from "@/components/common/SkeletonLoading";
 import { Badge, BadgeVariant } from "../ui/badge";
@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 import dayjs from "@/lib/dayjs";
 import { healthInformationPath } from "@/lib/paths";
 import { toast } from "@/lib/utils";
+import { useErrorToast } from "@/hooks/useErrorToast";
 import { useTranslation } from "react-i18next";
 
 const CONSENT_STATUS_VARIANTS: Partial<
@@ -39,7 +40,7 @@ export const AbdmEncounterTab: FC<EncounterTabProps> = ({
 }) => {
   const { t } = useTranslation(I18NNAMESPACE);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ["consents", patient.id],
     queryFn: () =>
       apis.consent.list({
@@ -49,6 +50,7 @@ export const AbdmEncounterTab: FC<EncounterTabProps> = ({
       }),
     enabled: !!patient.id,
   });
+  useErrorToast(error, t("error_fetching_consent_requests"));
 
   if (isLoading) {
     return (
@@ -171,6 +173,9 @@ function ConsentRequestCard({
     onSuccess: (data) => {
       toast.success(data?.detail ?? t("checking_consent_status"));
       toast.warning(t("async_operation_warning"));
+    },
+    onError: (error) => {
+      toast.error(errorMessage(error, t("error_checking_consent_status")));
     },
   });
 
